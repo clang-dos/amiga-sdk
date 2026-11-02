@@ -1,0 +1,16 @@
+name: check
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Shell syntax
+        run: |
+          sh -n build-sysroot.sh
+          bash -n tools/fsuae-test.sh
+      - name: fd2stub tests
+        run: python3 -m unittest discover -s tests -v

@@ -1,0 +1,7 @@
+# Never commit Amiga ROMs, disk images or NDK files: they can't be redistributed.
+*.rom
+*.adf
+*.hdf
+/ndk/
+/sysroot/
+__pycache__/
