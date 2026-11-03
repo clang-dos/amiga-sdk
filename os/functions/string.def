@@ -1,0 +1,10 @@
+# string.def: the functions of string.gadget.
+# From AROS workbench/classes/reaction/string/string.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base StringBase
+basetype struct Library
+libname string.gadget
+include intuition/classes.h
+include intuition/gadgetclass.h
+include gadgets/string.h
+-30 Class *STRING_GetClass(void) ()

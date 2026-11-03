@@ -1,0 +1,26 @@
+# lowlevel.def: the functions of lowlevel.library.
+# From AROS workbench/libs/lowlevel/lowlevel.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base LowLevelBase
+basetype struct Library
+libname lowlevel.library
+include libraries/lowlevel.h
+include devices/timer.h
+include utility/tagitem.h
+-30 v40 ULONG ReadJoyPort(ULONG port) (d0)
+-36 v40 UBYTE GetLanguageSelection(void) ()
+-48 v40 ULONG GetKey(void) ()
+-54 v40 void QueryKeys(struct KeyQuery *queryArray, LONG arraySize) (a0,d1)
+-60 v40 APTR AddKBInt(APTR intRoutine, APTR intData) (a0,a1)
+-66 v40 void RemKBInt(APTR intHandle) (a1)
+-72 v40 ULONG SystemControlA(struct TagItem *tagList) (a1)
+= ULONG SystemControl(Tag tag1, ...)
+-78 v40 APTR AddTimerInt(APTR intRoutine, APTR intData) (a0,a1)
+-84 v40 void RemTimerInt(APTR intHandle) (a1)
+-90 v40 void StopTimerInt(APTR intHandle) (a1)
+-96 v40 void StartTimerInt(APTR intHandle, ULONG timeInterval, LONG continuous) (a1,d0,d1)
+-102 v40 ULONG ElapsedTime(struct EClockVal *context) (a0)
+-108 v40 APTR AddVBlankInt(APTR intRoutine, APTR intData) (a0,a1)
+-114 v40 void RemVBlankInt(APTR intHandle) (a1)
+-132 v41 BOOL SetJoyPortAttrsA(ULONG portNumber, struct TagItem *taglist) (d0,a1)
+= BOOL SetJoyPortAttrs(ULONG portNumber, Tag tag1, ...)

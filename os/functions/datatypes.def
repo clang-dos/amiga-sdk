@@ -1,0 +1,46 @@
+# datatypes.def: the functions of datatypes.library.
+# From AROS workbench/libs/datatypes/datatypes.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base DataTypesBase
+basetype struct Library
+libname datatypes.library
+include intuition/classes.h
+include intuition/intuition.h
+include intuition/gadgetclass.h
+include datatypes/datatypes.h
+include datatypes/datatypesclass.h
+-36 struct DataType *ObtainDataTypeA(ULONG type, APTR handle, struct TagItem *attrs) (d0,a0,a1)
+= struct DataType *ObtainDataType(ULONG type, APTR handle, Tag tag1, ...)
+-42 void ReleaseDataType(struct DataType *dt) (a0)
+-48 Object *NewDTObjectA(CONST_STRPTR name, CONST struct TagItem *attrs) (d0,a0)
+= Object *NewDTObject(CONST_STRPTR name, Tag tag1, ...)
+-54 void DisposeDTObject(Object *o) (a0)
+-60 ULONG SetDTAttrsA(Object *o, struct Window *win, struct Requester *req, struct TagItem *attrs) (a0,a1,a2,a3)
+= ULONG SetDTAttrs(Object *o, struct Window *win, struct Requester *req, Tag tag1, ...)
+-66 ULONG GetDTAttrsA(Object *o, struct TagItem *attrs) (a0,a2)
+= ULONG GetDTAttrs(Object *o, Tag tag1, ...)
+-72 LONG AddDTObject(struct Window *win, struct Requester *req, Object *obj, LONG pos) (a0,a1,a2,d0)
+-78 void RefreshDTObjectA(Object *object, struct Window *window, struct Requester *req, struct TagItem *attrs) (a0,a1,a2,a3)
+= void RefreshDTObject(Object *object, struct Window *window, struct Requester *req, Tag tag1, ...)
+= void RefreshDTObjects(Object *object, struct Window *window, struct Requester *req, Tag tag1, ...)
+= void RefreshDTObjects(Object *object, struct Window *window, struct Requester *req, Tag tag1, ...)
+-84 ULONG DoAsyncLayout(Object *object, struct gpLayout *gpl) (a0,a1)
+-90 ULONG DoDTMethodA(Object *o, struct Window *win, struct Requester *req, Msg msg) (a0,a1,a2,a3)
+= ULONG DoDTMethod(Object *o, struct Window *win, struct Requester *req, ULONG data, ...)
+= ULONG DoDTMethod(Object *o, struct Window *win, struct Requester *req, ULONG data, ...)
+-96 LONG RemoveDTObject(struct Window *window, Object *object) (a0,a1)
+-102 ULONG *GetDTMethods(Object *object) (a0)
+-108 struct DTMethods *GetDTTriggerMethods(Object *object) (a0)
+-114 ULONG PrintDTObjectA(Object *object, struct Window *window, struct Requester *requester, struct dtPrint *msg) (a0,a1,a2,a3)
+= ULONG PrintDTObject(Object *object, struct Window *window, struct Requester *requester, ULONG data, ...)
+= ULONG PrintDTObject(Object *object, struct Window *window, struct Requester *requester, ULONG data, ...)
+-138 CONST_STRPTR GetDTString(ULONG id) (d0)
+-258 ULONG *FindMethod(ULONG *methods, ULONG searchmethodid) (a0,a1)
+-264 struct DTMethod *FindTriggerMethod(struct DTMethod *methods, STRPTR command, ULONG method) (a0,a1,d0)
+-270 ULONG *CopyDTMethods(ULONG *methods, ULONG *include, ULONG *exclude) (a0,a1,a2)
+-276 struct DTMethod *CopyDTTriggerMethods(struct DTMethod *methods, struct DTMethod *include, struct DTMethod *exclude) (a0,a1,a2)
+-282 VOID *FreeDTMethods(APTR methods) (a0)
+-288 ULONG GetDTTriggerMethodDataFlags(ULONG method) (d0)
+-294 ULONG SaveDTObjectA(Object *o, struct Window *win, struct Requester *req, STRPTR file, ULONG mode, LONG saveicon, CONST struct TagItem *attrs) (a0,a1,a2,a3,d0,d1,a4)
+= ULONG SaveDTObject(Object *o, struct Window *win, struct Requester *req, STRPTR file, ULONG mode, LONG saveicon, Tag tag1, ...)
+-300 ULONG StartDragSelect(Object *o) (a0)

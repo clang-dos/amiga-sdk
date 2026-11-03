@@ -1,0 +1,10 @@
+# space.def: the functions of space.gadget.
+# From AROS workbench/classes/reaction/space/space.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base SpaceBase
+basetype struct Library
+libname space.gadget
+include intuition/classes.h
+include intuition/gadgetclass.h
+include gadgets/space.h
+-30 Class *SPACE_GetClass(void) ()

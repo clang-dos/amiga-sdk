@@ -1,0 +1,30 @@
+# diskfont.def: the functions of diskfont.library.
+# From AROS workbench/libs/diskfont/diskfont.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base DiskfontBase
+basetype struct Library
+libname diskfont.library
+include dos/dos.h
+include graphics/text.h
+-30 struct TextFont *OpenDiskFont(struct TextAttr *textAttr) (a0)
+-36 LONG AvailFonts(struct AvailFontsHeader *buffer, LONG bufBytes, ULONG flags) (a0,d0,d1)
+-42 v34 struct FontContentsHeader *NewFontContents(BPTR fontsLock, STRPTR fontName) (a0,a1)
+-48 v34 void DisposeFontContents(struct FontContentsHeader *fontContentsHeader) (a1)
+-54 v36 struct DiskFont *NewScaledDiskFont(struct TextFont *sourceFont, struct TextAttr *destTextAttr) (a0,a1)
+-60 v47 LONG GetDiskFontCtrl(LONG tagid) (d0)
+-66 v47 VOID SetDiskFontCtrlA(struct TagItem *taglist) (a0)
+= VOID SetDiskFontCtrl(Tag tag1, ...)
+-72 v47 LONG EOpenEngine(struct EGlyphEngine *eEngine) (a0)
+-78 v47 VOID ECloseEngine(struct EGlyphEngine *eEngine) (a0)
+-84 v47 ULONG ESetInfoA(struct EGlyphEngine *eEngine, struct TagItem *taglist) (a0,a1)
+= ULONG ESetInfo(struct EGlyphEngine *eEngine, Tag tag1, ...)
+-90 v47 ULONG EObtainInfoA(struct EGlyphEngine *eEngine, struct TagItem *taglist) (a0,a1)
+= ULONG EObtainInfo(struct EGlyphEngine *eEngine, Tag tag1, ...)
+-96 v47 ULONG EReleaseInfoA(struct EGlyphEngine *eEngine, struct TagItem *taglist) (a0,a1)
+= ULONG EReleaseInfo(struct EGlyphEngine *eEngine, Tag tag1, ...)
+-102 v47 struct OutlineFont *OpenOutlineFont(CONST_STRPTR name, struct List *list, ULONG flags) (a0,a1,d0)
+-108 v47 VOID CloseOutlineFont(struct OutlineFont *olf, struct List *list) (a0,a1)
+-114 v47 LONG WriteFontContents(BPTR fontsLock, CONST_STRPTR fontName, CONST struct FontContentsHeader *fontContentsHeader) (a0,a1,a2)
+-120 v47 LONG WriteDiskFontHeaderA(struct TextFont *font, CONST_STRPTR fileName, struct TagItem *tagList) (a0,a1,a2)
+= LONG WriteDiskFontHeader(struct TextFont *font, CONST_STRPTR fileName, Tag tag1, ...)
+-126 v47 ULONG ObtainCharsetInfo(ULONG knownTag, ULONG knownValue, ULONG wantedTag) (d0,d1,d2)

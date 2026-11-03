@@ -1,0 +1,31 @@
+# listbrowser.def: the functions of listbrowser.gadget.
+# From AROS workbench/classes/reaction/listbrowser/listbrowser.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base ListBrowserBase
+basetype struct Library
+libname listbrowser.gadget
+include intuition/classes.h
+include intuition/gadgetclass.h
+include gadgets/listbrowser.h
+-30 Class *LISTBROWSER_GetClass(void) ()
+-36 struct Node *AllocListBrowserNodeA(ULONG columns, struct TagItem *tags) (d0,a0)
+= struct Node *AllocListBrowserNode(ULONG columns, ...)
+-42 void FreeListBrowserNode(struct Node *node) (a0)
+-48 void SetListBrowserNodeAttrsA(struct Node *node, struct TagItem *tags) (a0,a1)
+= void SetListBrowserNodeAttrs(struct Node *node, Tag tag1, ...)
+-54 void GetListBrowserNodeAttrsA(struct Node *node, struct TagItem *tags) (a0,a1)
+= void GetListBrowserNodeAttrs(struct Node *node, Tag tag1, ...)
+-60 void ListBrowserSelectAll(struct List *list) (a0)
+-66 VOID ShowListBrowserNodeChildren(struct Node *node, LONG depth) (a0,d0)
+-72 void HideListBrowserNodeChildren(struct Node *node) (a0)
+-78 void ShowAllListBrowserChildren(struct List *list) (a0)
+-84 void HideAllListBrowserChildren(struct List *list) (a0)
+-90 void FreeListBrowserList(struct List *list) (a0)
+-96 struct ColumnInfo *AllocLBColumnInfoA(ULONG columns, struct TagItem *tags) (d0,a0)
+= struct ColumnInfo *AllocLBColumnInfo(ULONG columns, ...)
+-102 LONG SetLBColumnInfoAttrsA(struct ColumnInfo *colinfo, struct TagItem *tags) (a1,a0)
+= LONG SetLBColumnInfoAttrs(struct ColumnInfo *colinfo, Tag tag1, ...)
+-108 LONG GetLBColumnInfoAttrsA(struct ColumnInfo *colinfo, struct TagItem *tags) (a1,a0)
+= LONG GetLBColumnInfoAttrs(struct ColumnInfo *colinfo, Tag tag1, ...)
+-114 void FreeLBColumnInfo(struct ColumnInfo *colinfo) (a0)
+-120 void ListBrowserClearAll(struct List *list) (a0)

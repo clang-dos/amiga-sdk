@@ -1,0 +1,10 @@
+# bitmap.def: the functions of bitmap.image.
+# From AROS workbench/classes/reaction/bitmap/bitmap.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base BitMapBase
+basetype struct Library
+libname bitmap.image
+include intuition/classes.h
+include intuition/imageclass.h
+include images/bitmap.h
+-30 Class *BITMAP_GetClass(void) ()

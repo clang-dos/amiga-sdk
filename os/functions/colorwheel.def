@@ -1,0 +1,10 @@
+# colorwheel.def: the functions of colorwheel.gadget.
+# From AROS workbench/classes/gadgets/colorwheel/colorwheel.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base ColorWheelBase
+basetype struct Library
+libname colorwheel.gadget
+include intuition/gadgetclass.h
+include gadgets/colorwheel.h
+-30 void ConvertHSBToRGB(struct ColorWheelHSB *hsb, struct ColorWheelRGB *rgb) (a0,a1)
+-36 void ConvertRGBToHSB(struct ColorWheelRGB *rgb, struct ColorWheelHSB *hsb) (a0,a1)

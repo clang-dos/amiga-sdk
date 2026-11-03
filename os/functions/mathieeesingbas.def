@@ -1,0 +1,18 @@
+# mathieeesingbas.def: the functions of mathieeesingbas.library.
+# From AROS workbench/libs/mathieeesingbas/mathieeesingbas.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base MathIeeeSingBasBase
+basetype struct Library
+libname mathieeesingbas.library
+-30 LONG IEEESPFix(FLOAT y) (d0)
+-36 FLOAT IEEESPFlt(LONG y) (d0)
+-42 LONG IEEESPCmp(FLOAT y, FLOAT z) (d0,d1)
+-48 LONG IEEESPTst(FLOAT y) (d0)
+-54 FLOAT IEEESPAbs(FLOAT y) (d0)
+-60 FLOAT IEEESPNeg(FLOAT y) (d0)
+-66 FLOAT IEEESPAdd(FLOAT y, FLOAT z) (d0,d1)
+-72 FLOAT IEEESPSub(FLOAT y, FLOAT z) (d0,d1)
+-78 FLOAT IEEESPMul(FLOAT y, FLOAT z) (d0,d1)
+-84 FLOAT IEEESPDiv(FLOAT y, FLOAT z) (d0,d1)
+-90 FLOAT IEEESPFloor(FLOAT y) (d0)
+-96 FLOAT IEEESPCeil(FLOAT y) (d0)

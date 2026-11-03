@@ -1,0 +1,23 @@
+# mathieeesingtrans.def: the functions of mathieeesingtrans.library.
+# From AROS workbench/libs/mathieeesingtrans/mathieeesingtrans.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base MathIeeeSingTransBase
+basetype struct Library
+libname mathieeesingtrans.library
+-30 FLOAT IEEESPAtan(FLOAT y) (d0)
+-36 FLOAT IEEESPSin(FLOAT y) (d0)
+-42 FLOAT IEEESPCos(FLOAT y) (d0)
+-48 FLOAT IEEESPTan(FLOAT y) (d0)
+-54 FLOAT IEEESPSincos(FLOAT *z, FLOAT y) (a0,d0)
+-60 FLOAT IEEESPSinh(FLOAT y) (d0)
+-66 FLOAT IEEESPCosh(FLOAT y) (d0)
+-72 FLOAT IEEESPTanh(FLOAT y) (d0)
+-78 FLOAT IEEESPExp(FLOAT y) (d0)
+-84 FLOAT IEEESPLog(FLOAT y) (d0)
+-90 FLOAT IEEESPPow(FLOAT x, FLOAT y) (d1,d0)
+-96 FLOAT IEEESPSqrt(FLOAT y) (d0)
+-102 FLOAT IEEESPTieee(FLOAT y) (d0)
+-108 FLOAT IEEESPFieee(FLOAT y) (d0)
+-114 FLOAT IEEESPAsin(FLOAT y) (d0)
+-120 FLOAT IEEESPAcos(FLOAT y) (d0)
+-126 FLOAT IEEESPLog10(FLOAT y) (d0)

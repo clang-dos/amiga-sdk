@@ -1,0 +1,10 @@
+# requester.def: the functions of requester.class.
+# From AROS workbench/classes/reaction/requester/requester.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base RequesterBase
+basetype struct Library
+libname requester.class
+include classes/requester.h
+include intuition/intuition.h
+include intuition/classes.h
+-30 Class *REQUESTER_GetClass(void) ()

@@ -1,0 +1,24 @@
+# cardres.def: the functions of card.resource.
+# From AROS rom/card/card.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base CardResource
+basetype struct Library
+libname card.resource
+include resources/card.h
+-6 struct CardHandle *OwnCard(struct CardHandle *handle) (a1)
+-12 void ReleaseCard(struct CardHandle *handle, ULONG flags) (a1,d0)
+-18 struct CardMemoryMap *GetCardMap(void) ()
+-24 BOOL BeginCardAccess(struct CardHandle *handle) (a1)
+-30 BOOL EndCardAccess(struct CardHandle *handle) (a1)
+-36 UBYTE ReadCardStatus(void) ()
+-42 BOOL CardResetRemove(struct CardHandle *handle, ULONG flag) (a1,d0)
+-48 UBYTE CardMiscControl(struct CardHandle *handle, ULONG control_bits) (a1,d1)
+-54 ULONG CardAccessSpeed(struct CardHandle *handle, ULONG nanoseconds) (a1,d0)
+-60 LONG CardProgramVoltage(struct CardHandle *handle, ULONG voltage) (a1,d0)
+-66 BOOL CardResetCard(struct CardHandle *handle) (a1)
+-72 BOOL CopyTuple(struct CardHandle *handle, UBYTE *buffer, ULONG tuplecode, ULONG size) (a1,a0,d1,d0)
+-78 ULONG DeviceTuple(UBYTE *tuple_data, struct DeviceTData *storage) (a0,a1)
+-84 struct Resident *IfAmigaXIP(struct CardHandle *handle) (a2)
+-90 BOOL CardForceChange(void) ()
+-96 ULONG CardChangeCount(void) ()
+-102 ULONG CardInterface(void) ()

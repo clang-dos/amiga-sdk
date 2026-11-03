@@ -1,0 +1,49 @@
+# iffparse.def: the functions of iffparse.library.
+# From AROS workbench/libs/iffparse/iffparse.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base IFFParseBase
+basetype struct Library
+libname iffparse.library
+include utility/utility.h
+include utility/hooks.h
+include libraries/iffparse.h
+-30 v33 struct IFFHandle *AllocIFF(void) ()
+-36 v33 LONG OpenIFF(struct IFFHandle *iff, LONG rwMode) (a0,d0)
+-42 v33 LONG ParseIFF(struct IFFHandle *iff, LONG mode) (a0,d0)
+-48 v33 void CloseIFF(struct IFFHandle *iff) (a0)
+-54 v33 void FreeIFF(struct IFFHandle *iff) (a0)
+-60 v33 LONG ReadChunkBytes(struct IFFHandle *iff, APTR buf, LONG numBytes) (a0,a1,d0)
+-66 v33 LONG WriteChunkBytes(struct IFFHandle *iff, APTR buf, LONG numBytes) (a0,a1,d0)
+-72 v33 LONG ReadChunkRecords(struct IFFHandle *iff, APTR buf, LONG bytesPerRecord, LONG numRecords) (a0,a1,d0,d1)
+-78 v33 LONG WriteChunkRecords(struct IFFHandle *iff, APTR buf, LONG bytesPerRecord, LONG numRecords) (a0,a1,d0,d1)
+-84 v33 LONG PushChunk(struct IFFHandle *iff, LONG type, LONG id, LONG size) (a0,d0,d1,d2)
+-90 v33 LONG PopChunk(struct IFFHandle *iff) (a0)
+-102 v33 LONG EntryHandler(struct IFFHandle *iff, LONG type, LONG id, LONG position, struct Hook *handler, APTR object) (a0,d0,d1,d2,a1,a2)
+-108 v33 LONG ExitHandler(struct IFFHandle *iff, LONG type, LONG id, LONG position, struct Hook *handler, APTR object) (a0,d0,d1,d2,a1,a2)
+-114 v33 LONG PropChunk(struct IFFHandle *iff, LONG type, LONG id) (a0,d0,d1)
+-120 v33 LONG PropChunks(struct IFFHandle *iff, const LONG *propArray, LONG numPairs) (a0,a1,d0)
+-126 v33 LONG StopChunk(struct IFFHandle *iff, LONG type, LONG id) (a0,d0,d1)
+-132 v33 LONG StopChunks(struct IFFHandle *iff, const LONG *propArray, LONG numPairs) (a0,a1,d0)
+-138 v33 LONG CollectionChunk(struct IFFHandle *iff, LONG type, LONG id) (a0,d0,d1)
+-144 v33 LONG CollectionChunks(struct IFFHandle *iff, const LONG *propArray, LONG numPairs) (a0,a1,d0)
+-150 v33 LONG StopOnExit(struct IFFHandle *iff, LONG type, LONG id) (a0,d0,d1)
+-156 v33 struct StoredProperty *FindProp(struct IFFHandle *iff, LONG type, LONG id) (a0,d0,d1)
+-162 v33 struct CollectionItem *FindCollection(struct IFFHandle *iff, LONG type, LONG id) (a0,d0,d1)
+-168 v33 struct ContextNode *FindPropContext(struct IFFHandle *iff) (a0)
+-174 v33 struct ContextNode *CurrentChunk(struct IFFHandle *iff) (a0)
+-180 v33 struct ContextNode *ParentChunk(struct ContextNode *contextNode) (a0)
+-186 v33 struct LocalContextItem *AllocLocalItem(LONG type, LONG id, LONG ident, LONG dataSize) (d0,d1,d2,d3)
+-192 v33 APTR LocalItemData(struct LocalContextItem *localItem) (a0)
+-198 v33 void SetLocalItemPurge(struct LocalContextItem *localItem, struct Hook *purgeHook) (a0,a1)
+-204 v33 void FreeLocalItem(struct LocalContextItem *localItem) (a0)
+-210 v33 struct LocalContextItem *FindLocalItem(struct IFFHandle *iff, LONG type, LONG id, LONG ident) (a0,d0,d1,d2)
+-216 v33 LONG StoreLocalItem(struct IFFHandle *iff, struct LocalContextItem *localItem, LONG position) (a0,a1,d0)
+-222 v33 void StoreItemInContext(struct IFFHandle *iff, struct LocalContextItem *localItem, struct ContextNode *contextNode) (a0,a1,a2)
+-228 v33 void InitIFF(struct IFFHandle *iff, LONG flags, struct Hook *streamHook) (a0,d0,a1)
+-234 v33 void InitIFFasDOS(struct IFFHandle *iff) (a0)
+-240 v33 void InitIFFasClip(struct IFFHandle *iff) (a0)
+-246 v33 struct ClipboardHandle *OpenClipboard(LONG unitNumber) (d0)
+-252 v33 void CloseClipboard(struct ClipboardHandle *clipHandle) (a0)
+-258 v33 LONG GoodID(LONG id) (d0)
+-264 v33 LONG GoodType(LONG type) (d0)
+-270 v33 STRPTR IDtoStr(LONG id, STRPTR buf) (d0,a0)

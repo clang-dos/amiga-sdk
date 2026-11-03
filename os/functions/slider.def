@@ -1,0 +1,10 @@
+# slider.def: the functions of slider.gadget.
+# From AROS workbench/classes/reaction/slider/slider.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base SliderBase
+basetype struct Library
+libname slider.gadget
+include intuition/classes.h
+include intuition/gadgetclass.h
+include gadgets/slider.h
+-30 Class *SLIDER_GetClass(void) ()

@@ -1,0 +1,10 @@
+# getfont.def: the functions of getfont.gadget.
+# From AROS workbench/classes/reaction/getfont/getfont.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base GetFontBase
+basetype struct Library
+libname getfont.gadget
+include intuition/classes.h
+include intuition/gadgetclass.h
+include gadgets/getfont.h
+-30 Class *GETFONT_GetClass(void) ()

@@ -1,0 +1,8 @@
+# ramdrive.def: the functions of ramdrive.device.
+# From AROS workbench/devs/ramdrive/ramdrive.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base RamdriveBase
+basetype struct Device
+libname ramdrive.device
+-42 STRPTR KillRAD0(void) ()
+-48 STRPTR KillRAD(ULONG unit) (d0)

@@ -1,0 +1,17 @@
+# radiobutton.def: the functions of radiobutton.gadget.
+# From AROS workbench/classes/reaction/radiobutton/radiobutton.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base RadioButtonBase
+basetype struct Library
+libname radiobutton.gadget
+include intuition/classes.h
+include intuition/gadgetclass.h
+include gadgets/radiobutton.h
+-30 Class *RADIOBUTTON_GetClass(void) ()
+-36 struct Node *AllocRadioButtonNodeA(ULONG columns, struct TagItem *tags) (d0,a0)
+= struct Node *AllocRadioButtonNode(ULONG columns, ...)
+-42 void FreeRadioButtonNode(struct Node *node) (a0)
+-48 void SetRadioButtonNodeAttrsA(struct Node *node, struct TagItem *tags) (a0,a1)
+= void SetRadioButtonNodeAttrs(struct Node *node, Tag tag1, ...)
+-54 void GetRadioButtonNodeAttrsA(struct Node *node, struct TagItem *tags) (a0,a1)
+= void GetRadioButtonNodeAttrs(struct Node *node, Tag tag1, ...)

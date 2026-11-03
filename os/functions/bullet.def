@@ -1,0 +1,16 @@
+# bullet.def: the functions of bullet.library.
+# From AROS workbench/libs/bullet/bullet.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base BulletBase
+basetype struct Library
+libname bullet.library
+include utility/tagitem.h
+include diskfont/glyph.h
+-30 struct GlyphEngine *OpenEngine(void) ()
+-36 void CloseEngine(struct GlyphEngine *glyphEngine) (a0)
+-42 ULONG SetInfoA(struct GlyphEngine *glyphEngine, struct TagItem *tagList) (a0,a1)
+= ULONG SetInfo(struct GlyphEngine *glyphEngine, Tag tag1, ...)
+-48 ULONG ObtainInfoA(struct GlyphEngine *glyphEngine, struct TagItem *tagList) (a0,a1)
+= ULONG ObtainInfo(struct GlyphEngine *glyphEngine, Tag tag1, ...)
+-54 ULONG ReleaseInfoA(struct GlyphEngine *glyphEngine, struct TagItem *tagList) (a0,a1)
+= ULONG ReleaseInfo(struct GlyphEngine *glyphEngine, Tag tag1, ...)

@@ -1,0 +1,8 @@
+# translator.def: the functions of translator.library.
+# From AROS workbench/libs/translator/translator.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base TranslatorBase
+basetype struct Library
+libname translator.library
+include exec/types.h
+-30 LONG Translate(CONST_STRPTR inputString, LONG inputLength, STRPTR outputBuffer, LONG outputLength) (a0,d0,a1,d1)

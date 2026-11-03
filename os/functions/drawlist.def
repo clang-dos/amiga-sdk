@@ -1,0 +1,10 @@
+# drawlist.def: the functions of drawlist.image.
+# From AROS workbench/classes/reaction/drawlist/drawlist.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base DrawListBase
+basetype struct Library
+libname drawlist.image
+include intuition/classes.h
+include intuition/imageclass.h
+include images/drawlist.h
+-30 Class *DRAWLIST_GetClass(void) ()

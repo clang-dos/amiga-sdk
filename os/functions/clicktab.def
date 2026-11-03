@@ -1,0 +1,17 @@
+# clicktab.def: the functions of clicktab.gadget.
+# From AROS workbench/classes/reaction/clicktab/clicktab.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base ClickTabBase
+basetype struct Library
+libname clicktab.gadget
+include intuition/classes.h
+include intuition/gadgetclass.h
+include gadgets/clicktab.h
+-30 Class *CLICKTAB_GetClass(void) ()
+-36 struct Node *AllocClickTabNodeA(struct TagItem *tags) (a0)
+= struct Node *AllocClickTabNode(Tag tag1, ...)
+-42 void FreeClickTabNode(struct Node *node) (a0)
+-48 void SetClickTabNodeAttrsA(struct Node *node, struct TagItem *tags) (a0,a1)
+= void SetClickTabNodeAttrs(struct Node *node, Tag tag1, ...)
+-54 void GetClickTabNodeAttrsA(struct Node *node, struct TagItem *tags) (a0,a1)
+= void GetClickTabNodeAttrs(struct Node *node, Tag tag1, ...)

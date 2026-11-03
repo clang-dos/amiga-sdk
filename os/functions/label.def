@@ -1,0 +1,10 @@
+# label.def: the functions of label.image.
+# From AROS workbench/classes/reaction/label/label.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base LabelBase
+basetype struct Library
+libname label.image
+include intuition/classes.h
+include intuition/imageclass.h
+include images/label.h
+-30 Class *LABEL_GetClass(void) ()

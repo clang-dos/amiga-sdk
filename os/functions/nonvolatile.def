@@ -1,0 +1,14 @@
+# nonvolatile.def: the functions of nonvolatile.library.
+# From AROS workbench/libs/nonvolatile/nonvolatile.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base NVBase
+basetype struct Library
+libname nonvolatile.library
+include libraries/nonvolatile.h
+-30 v40 APTR GetCopyNV(CONST_STRPTR appName, CONST_STRPTR itemName, LONG killRequesters) (a0,a1,d1)
+-36 v40 void FreeNVData(APTR data) (a0)
+-42 v40 UWORD StoreNV(CONST_STRPTR appName, CONST_STRPTR itemName, CONST APTR data, ULONG length, LONG killRequesters) (a0,a1,a2,d0,d1)
+-48 v40 BOOL DeleteNV(CONST_STRPTR appName, CONST_STRPTR itemName, LONG killRequesters) (a0,a1,d1)
+-54 v40 struct NVInfo *GetNVInfo(LONG killRequesters) (d1)
+-60 v40 struct MinList *GetNVList(CONST_STRPTR appName, LONG killRequesters) (a0,d1)
+-66 v40 BOOL SetNVProtection(CONST_STRPTR appName, CONST_STRPTR itemName, LONG mask, LONG killRequesters) (a0,a1,d2,d1)

@@ -1,0 +1,23 @@
+# mathieeedoubtrans.def: the functions of mathieeedoubtrans.library.
+# From AROS workbench/libs/mathieeedoubtrans/mathieeedoubtrans.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base MathIeeeDoubTransBase
+basetype struct MathIEEEBase
+libname mathieeedoubtrans.library
+-30 double IEEEDPAtan(double y) (d0,d1)
+-36 double IEEEDPSin(double y) (d0,d1)
+-42 double IEEEDPCos(double y) (d0,d1)
+-48 double IEEEDPTan(double y) (d0,d1)
+-54 double IEEEDPSincos(double *z, double y) (a0,d0,d1)
+-60 double IEEEDPSinh(double y) (d0,d1)
+-66 double IEEEDPCosh(double y) (d0,d1)
+-72 double IEEEDPTanh(double y) (d0,d1)
+-78 double IEEEDPExp(double y) (d0,d1)
+-84 double IEEEDPLog(double y) (d0,d1)
+-90 double IEEEDPPow(double exp, double arg) (d2,d3,d0,d1)
+-96 double IEEEDPSqrt(double y) (d0,d1)
+-102 FLOAT IEEEDPTieee(double y) (d0,d1)
+-108 double IEEEDPFieee(FLOAT y) (d0)
+-114 double IEEEDPAsin(double y) (d0,d1)
+-120 double IEEEDPAcos(double y) (d0,d1)
+-126 double IEEEDPLog10(double y) (d0,d1)

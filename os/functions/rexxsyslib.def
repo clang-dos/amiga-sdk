@@ -1,0 +1,25 @@
+# rexxsyslib.def: the functions of rexxsyslib.library.
+# From AROS workbench/libs/rexxsyslib/rexxsyslib.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base RexxSysBase
+basetype struct RxsLib
+libname rexxsyslib.library
+include dos/dos.h
+include rexx/storage.h
+-126 v33 UBYTE *CreateArgstring(CONST UBYTE *string, ULONG length) (a0,d0)
+-132 v33 void DeleteArgstring(UBYTE *argstring) (a0)
+-138 v33 ULONG LengthArgstring(UBYTE *argstring) (a0)
+-144 v33 struct RexxMsg *CreateRexxMsg(struct MsgPort *port, UBYTE *extension, UBYTE *host) (a0,a1,d0)
+-150 v33 void DeleteRexxMsg(struct RexxMsg *packet) (a0)
+-156 v33 void ClearRexxMsg(struct RexxMsg *msgptr, ULONG count) (a0,d0)
+-162 v33 BOOL FillRexxMsg(struct RexxMsg *msgptr, ULONG count, ULONG mask) (a0,d0,d1)
+-168 v33 BOOL IsRexxMsg(struct RexxMsg *msgptr) (a0)
+-450 v33 void LockRexxBase(ULONG resource) (d0)
+-456 v33 void UnlockRexxBase(ULONG resource) (d0)
+-480 v47 struct MsgPort *CreateRexxHostPort(CONST_STRPTR basename) (a0)
+-486 v47 VOID DeleteRexxHostPort(struct MsgPort *port) (a0)
+-492 v47 LONG GetRexxVarFromMsg(CONST_STRPTR var, struct RexxMsg *message, STRPTR value) (a0,a2,a1)
+-498 v47 LONG SetRexxVarFromMsg(CONST_STRPTR var, struct RexxMsg *message, CONST_STRPTR value) (a0,a2,a1)
+-504 v47 struct RexxMsg *LaunchRexxScript(CONST_STRPTR script, struct MsgPort *replyport, CONST_STRPTR extension, BPTR input, BPTR output) (a0,a1,a2,d1,d2)
+-510 v47 VOID FreeRexxMsg(struct RexxMsg *rxm) (a0)
+-516 v47 LONG GetRexxBufferFromMsg(CONST_STRPTR var, struct RexxMsg *message, STRPTR buffer, ULONG buffersize) (a0,a2,a1,d0)

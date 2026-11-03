@@ -1,0 +1,10 @@
+# getscreenmode.def: the functions of getscreenmode.gadget.
+# From AROS workbench/classes/reaction/getscreenmode/getscreenmode.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base GetScreenModeBase
+basetype struct Library
+libname getscreenmode.gadget
+include intuition/classes.h
+include intuition/gadgetclass.h
+include gadgets/getscreenmode.h
+-30 Class *GETSCREENMODE_GetClass(void) ()

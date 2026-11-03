@@ -1,0 +1,10 @@
+# button.def: the functions of button.gadget.
+# From AROS workbench/classes/reaction/button/button.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base ButtonBase
+basetype struct Library
+libname button.gadget
+include intuition/classes.h
+include intuition/gadgetclass.h
+include gadgets/button.h
+-30 Class *BUTTON_GetClass(void) ()

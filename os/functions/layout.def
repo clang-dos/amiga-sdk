@@ -1,0 +1,18 @@
+# layout.def: the functions of layout.gadget.
+# From AROS workbench/classes/reaction/layout/layout.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base LayoutBase
+basetype struct Library
+libname layout.gadget
+include intuition/classes.h
+include intuition/gadgetclass.h
+include gadgets/layout.h
+-30 Class *LAYOUT_GetClass(void) ()
+-36 BOOL ActivateLayoutGadget(struct Gadget *gadget, struct Window *window, struct Requester *requester, ULONG object) (a0,a1,a2,d0)
+-42 void FlushLayoutDomainCache(struct Gadget *gadget) (a0)
+-48 BOOL RethinkLayout(struct Gadget *gadget, struct Window *window, struct Requester *requester, LONG refresh) (a0,a1,a2,d0)
+-54 void LayoutLimits(struct Gadget *gadget, struct LayoutLimits *limits, struct TextFont *font, struct Screen *screen) (a0,a1,a2,a3)
+-60 Class *PAGE_GetClass(void) ()
+-66 ULONG SetPageGadgetAttrsA(struct Gadget *gadget, Object *object, struct Window *window, struct Requester *requester, struct TagItem *tags) (a0,a1,a2,a3,a4)
+= ULONG SetPageGadgetAttrs(struct Gadget *gadget, Object *object, struct Window *window, struct Requester *requester, Tag tag1, ...)
+-72 void RefreshPageGadget(struct Gadget *gadget, Object *object, struct Window *window, struct Requester *requester) (a0,a1,a2,a3)

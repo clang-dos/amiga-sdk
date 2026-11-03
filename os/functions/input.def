@@ -1,0 +1,7 @@
+# input.def: the functions of input.device.
+# From AROS rom/devs/input/input.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base InputBase
+basetype struct Device
+libname input.device
+-42 UWORD PeekQualifier(void) ()

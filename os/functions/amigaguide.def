@@ -1,0 +1,33 @@
+# amigaguide.def: the functions of amigaguide.library.
+# From AROS workbench/libs/amigaguide/amigaguide.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base AmigaGuideBase
+basetype struct Library
+libname amigaguide.library
+include libraries/amigaguide.h
+-36 LONG LockAmigaGuideBase(AMIGAGUIDECONTEXT handle) (a0)
+-42 void UnlockAmigaGuideBase(LONG key) (d0)
+-54 AMIGAGUIDECONTEXT OpenAmigaGuideA(struct NewAmigaGuide *nag, struct TagItem *attrs) (a0,a1)
+= AMIGAGUIDECONTEXT OpenAmigaGuide(struct NewAmigaGuide *nag, Tag tag1, ...)
+-60 AMIGAGUIDECONTEXT OpenAmigaGuideAsyncA(struct NewAmigaGuide *nag, struct TagItem *attrs) (a0,d0)
+= AMIGAGUIDECONTEXT OpenAmigaGuideAsync(struct NewAmigaGuide *nag, Tag tag1, ...)
+-66 void CloseAmigaGuide(AMIGAGUIDECONTEXT handle) (a0)
+-72 ULONG AmigaGuideSignal(AMIGAGUIDECONTEXT handle) (a0)
+-78 struct AmigaGuideMsg *GetAmigaGuideMsg(AMIGAGUIDECONTEXT handle) (a0)
+-84 void ReplyAmigaGuideMsg(struct AmigaGuideMsg *msg) (a0)
+-90 LONG SetAmigaGuideContextA(APTR handle, ULONG context, struct TagItem *attrs) (a0,d0,d1)
+= LONG SetAmigaGuideContext(APTR handle, ULONG context, ...)
+-96 LONG SendAmigaGuideContextA(APTR handle, struct TagItem *attrs) (a0,d0)
+= LONG SendAmigaGuideContext(APTR handle, ...)
+-102 LONG SendAmigaGuideCmdA(APTR handle, CONST_STRPTR cmd, struct TagItem *attrs) (a0,d0,d1)
+= LONG SendAmigaGuideCmd(APTR handle, CONST_STRPTR cmd, ...)
+-108 LONG SetAmigaGuideAttrsA(AMIGAGUIDECONTEXT handle, struct TagItem *attrs) (a0,a1)
+= LONG SetAmigaGuideAttrs(AMIGAGUIDECONTEXT handle, Tag tag1, ...)
+-114 LONG GetAmigaGuideAttr(Tag tag, AMIGAGUIDECONTEXT handle, ULONG *storage) (d0,a0,a1)
+-126 LONG LoadXRef(BPTR lock, STRPTR name) (a0,a1)
+-132 void ExpungeXRef(void) ()
+-138 APTR AddAmigaGuideHostA(struct Hook *h, CONST_STRPTR name, struct TagItem *attrs) (a0,d0,a1)
+= APTR AddAmigaGuideHost(struct Hook *h, CONST_STRPTR name, ...)
+-144 LONG RemoveAmigaGuideHostA(APTR hh, struct TagItem *attrs) (a0,a1)
+= LONG RemoveAmigaGuideHost(APTR hh, ...)
+-210 STRPTR GetAmigaGuideString(LONG id) (d0)

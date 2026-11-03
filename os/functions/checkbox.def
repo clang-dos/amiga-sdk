@@ -1,0 +1,10 @@
+# checkbox.def: the functions of checkbox.gadget.
+# From AROS workbench/classes/reaction/checkbox/checkbox.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base CheckBoxBase
+basetype struct Library
+libname checkbox.gadget
+include intuition/classes.h
+include intuition/gadgetclass.h
+include gadgets/checkbox.h
+-30 Class *CHECKBOX_GetClass(void) ()

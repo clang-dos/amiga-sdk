@@ -1,0 +1,45 @@
+# layers.def: the functions of layers.library.
+# From AROS rom/hyperlayers/layers.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base LayersBase
+basetype struct Library
+libname layers.library
+include graphics/layers.h
+include graphics/gfx.h
+include graphics/clip.h
+-30 void InitLayers(struct Layer_Info *li) (a0)
+-36 struct Layer *CreateUpfrontLayer(struct Layer_Info *li, struct BitMap *bm, LONG x0, LONG y0, LONG x1, LONG y1, LONG flags, struct BitMap *bm2) (a0,a1,d0,d1,d2,d3,d4,a2)
+-42 struct Layer *CreateBehindLayer(struct Layer_Info *li, struct BitMap *bm, LONG x0, LONG y0, LONG x1, LONG y1, LONG flags, struct BitMap *bm2) (a0,a1,d0,d1,d2,d3,d4,a2)
+-48 LONG UpfrontLayer(LONG dummy, struct Layer *l) (a0,a1)
+-54 LONG BehindLayer(LONG dummy, struct Layer *l) (a0,a1)
+-60 LONG MoveLayer(LONG dummy, struct Layer *l, LONG dx, LONG dy) (a0,a1,d0,d1)
+-66 LONG SizeLayer(LONG dummy, struct Layer *l, LONG dw, LONG dh) (a0,a1,d0,d1)
+-72 void ScrollLayer(LONG dummy, struct Layer *l, LONG dx, LONG dy) (a0,a1,d0,d1)
+-78 LONG BeginUpdate(struct Layer *l) (a0)
+-84 VOID EndUpdate(struct Layer *layer, ULONG flag) (a0,d0)
+-90 LONG DeleteLayer(LONG dummy, struct Layer *l) (a0,a1)
+-96 void LockLayer(LONG dummy, struct Layer *layer) (a0,a1)
+-102 void UnlockLayer(struct Layer *layer) (a0)
+-108 void LockLayers(struct Layer_Info *li) (a0)
+-114 void UnlockLayers(struct Layer_Info *li) (a0)
+-120 void LockLayerInfo(struct Layer_Info *li) (a0)
+-126 void SwapBitsRastPortClipRect(struct RastPort *rp, struct ClipRect *cr) (a0,a1)
+-132 struct Layer *WhichLayer(struct Layer_Info *li, LONG x, LONG y) (a0,d0,d1)
+-138 void UnlockLayerInfo(struct Layer_Info *li) (a0)
+-144 struct Layer_Info *NewLayerInfo(void) ()
+-150 void DisposeLayerInfo(struct Layer_Info *li) (a0)
+-156 LONG FattenLayerInfo(struct Layer_Info *li) (a0)
+-162 void ThinLayerInfo(struct Layer_Info *li) (a0)
+-168 LONG MoveLayerInFrontOf(struct Layer *layer_to_move, struct Layer *other_layer) (a0,a1)
+-174 struct Region *InstallClipRegion(struct Layer *l, struct Region *region) (a0,a1)
+-180 LONG MoveSizeLayer(struct Layer *l, LONG dx, LONG dy, LONG dw, LONG dh) (a0,d0,d1,d2,d3)
+-186 struct Layer *CreateUpfrontHookLayer(struct Layer_Info *li, struct BitMap *bm, LONG x0, LONG y0, LONG x1, LONG y1, LONG flags, struct Hook *hook, struct BitMap *bm2) (a0,a1,d0,d1,d2,d3,d4,a3,a2)
+-192 struct Layer *CreateBehindHookLayer(struct Layer_Info *li, struct BitMap *bm, LONG x0, LONG y0, LONG x1, LONG y1, LONG flags, struct Hook *hook, struct BitMap *bm2) (a0,a1,d0,d1,d2,d3,d4,a3,a2)
+-198 struct Hook *InstallLayerHook(struct Layer *layer, struct Hook *hook) (a0,a1)
+-204 v39 struct Hook *InstallLayerInfoHook(struct Layer_Info *li, struct Hook *hook) (a0,a1)
+-210 v39 void SortLayerCR(struct Layer *layer, LONG dx, LONG dy) (a0,d0,d1)
+-216 v39 void DoHookClipRects(struct Hook *hook, struct RastPort *rport, struct Rectangle *rect) (a0,a1,a2)
+-222 v45 BOOL LayerOccluded(struct Layer *layer) (a0)
+-228 v45 LONG HideLayer(struct Layer *layer) (a0)
+-234 v45 LONG ShowLayer(struct Layer *layer, struct Layer *in_front_of) (a0,a1)
+-240 v45 BOOL SetLayerInfoBounds(struct Layer_Info *li, struct Rectangle *bounds) (a0,a1)

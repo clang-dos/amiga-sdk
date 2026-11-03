@@ -1,0 +1,8 @@
+# texteditor.def: the functions of texteditor.gadget.
+# Written for amiga-sdk; checked against the AmigaOS ABI with tools/ndk-compare.py.
+base TextFieldBase
+basetype struct Library
+libname texteditor.gadget
+include intuition/classes.h
+-30 Class *TEXTEDITOR_GetClass(void) ()
+-36 VOID HighlightSetFormat(APTR object, ULONG pos, ULONG end, ULONG style) (a0,d0,d1,d2)
