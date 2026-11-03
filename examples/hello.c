@@ -1,23 +1,14 @@
-// Prints a greeting through dos.library, and its arguments.
-struct Library;
-extern long Output(void);
-extern long Write(long file, const void *buf, long len);
+// Prints a greeting with the C library, and its arguments, and the
+// Kickstart version from exec.library.
+#include <stdio.h>
 
-static long len(const char *s) {
-  long n = 0;
-  while (s[n])
-    ++n;
-  return n;
-}
-
-static void put(const char *s) { Write(Output(), s, len(s)); }
+#include <exec/execbase.h>
+#include <proto/exec.h>
 
 int main(int argc, char **argv) {
-  put("Hello from clang on AmigaOS!\n");
-  for (int i = 1; i < argc; ++i) {
-    put("arg: ");
-    put(argv[i]);
-    put("\n");
-  }
+  printf("Hello from clang on AmigaOS %d.%d!\n", SysBase->LibNode.lib_Version,
+         SysBase->SoftVer);
+  for (int i = 1; i < argc; ++i)
+    printf("arg %d: %s\n", i, argv[i]);
   return 0;
 }

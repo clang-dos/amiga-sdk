@@ -10,7 +10,7 @@
 
 static inline LONG InlineWrite(BPTR fh, APTR buf, LONG len) {
   register LONG _r __asm("d0");
-  register struct Library *_b __asm("a6") = DOSBase;
+  register struct Library *_b __asm("a6") = (struct Library *)DOSBase;
   register BPTR _d1 __asm("d1") = fh;
   register APTR _d2 __asm("d2") = buf;
   register LONG _d3 __asm("d3") = len;
@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
     ok = 0;
   counter += argc;
   struct Library *lib = OpenLibrary((STRPTR) "dos.library", 0);
-  if (lib != DOSBase)
+  if (lib != (struct Library *)DOSBase)
     ok = 0;
   CloseLibrary(lib);
   say("SysBase version: ");
