@@ -9,6 +9,8 @@ built with clang from [clang-dos/llvm](https://github.com/clang-dos/llvm)
   compiler-rt builtins, all built for the 68000;
 - `tools/amiga-ndk.py`, which installs the AmigaOS headers and a stub for
   every OS library function from Hyperion's NDK 3.2;
+- the amiga.lib helper functions (`os/alib`), which `amiga-ndk.py` adds
+  to `libamiga.a`;
 - examples, and scripts to run programs in vamos and FS-UAE.
 
 Everything here can be redistributed. The NDK can't: it is free to
@@ -69,6 +71,32 @@ set their base variable (`IntuitionBase`, `GfxBase`, ...), as in
   with register arguments (hooks, for example) are declared as ordinary
   C ones; calling such a function needs inline assembly.
 
+### amiga.lib functions
+
+`libamiga.a` also has the helper functions of the classic `amiga.lib`,
+written for this SDK (`os/alib`), with the prototypes of
+`<clib/alib_protos.h>`:
+
+- hooks and BOOPSI: `HookEntry`, `CallHookA`/`CallHook`,
+  `DoMethodA`/`DoMethod`, `DoSuperMethodA`/`DoSuperMethod`,
+  `CoerceMethodA`/`CoerceMethod`, `SetSuperAttrs`. For a hook written in
+  C, put `HookEntry` in `h_Entry` and the C function in `h_SubEntry`; it
+  is called as `func(hook, object, message)`;
+- exec: `NewList`, `CreatePort`/`DeletePort`, `CreateExtIO`/`DeleteExtIO`,
+  `CreateStdIO`/`DeleteStdIO`, `CreateTask`/`DeleteTask`, `BeginIO`,
+  `LibCreatePool` and friends (exec's pools from V39, a simple version
+  before);
+- `TimeDelay`, `DoTimer`, `FastRand`, `RangeRand`, `ACrypt`;
+- tool types (`ArgArrayInit`, `ArgArrayDone`, `ArgString`, `ArgInt`; open
+  icon.library as `IconBase`) and commodities (`HotKey`, `InvertString`,
+  `FreeIEvents`; open commodities.library as `CxBase`).
+
+`ACrypt`, `FastRand` and `RangeRand` compute what AmigaOS's do, as in
+AROS (AROS Public License); the rest is written for this SDK.
+`examples/alibtest.c` checks them; it passes on Kickstart 1.3, 2.04 and
+3.1 in FS-UAE. Not there yet: `AddTOF`/`RemTOF`, `waitbeam`, and the
+ARexx variable functions (`CheckRexxMsg`, `GetRexxVar`, `SetRexxVar`).
+
 ## Building the sysroot
 
     BIN=/path/to/clang-dos/bin LLVM_SRC=/path/to/llvm \
@@ -94,6 +122,6 @@ The examples run on Kickstart 1.3 (A500) and 3.1 (A1200) in FS-UAE.
 
 ## Not done yet
 
-C++ (libc++), register-argument functions (hooks, libraries, devices),
+C++ (libc++), register-argument functions (libraries, devices),
 FPU code generation, small data (a4), inline OS calls without the stubs,
 auto-opening of libraries, Ctrl-C handling.

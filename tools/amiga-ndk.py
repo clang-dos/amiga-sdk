@@ -9,7 +9,8 @@ copy you have), checks it, and installs:
   include/        the NDK's C headers, with proto/ headers for clang
   lib/libamiga.a  a stub for each public function of every OS library,
                   which loads the arguments into the registers the library
-                  expects and calls it through its base in a6
+                  expects and calls it through its base in a6, and
+                  the amiga.lib helpers of this SDK (os/alib)
 
     amiga-ndk.py [--sysroot DIR] [--archive NDK3.2.lha] [--bin DIR]
 
@@ -207,8 +208,27 @@ def main():
                             os.path.join(stubdir, src), "-o", obj], check=True)
             return obj
 
+        # The amiga.lib helpers (HookEntry, CreatePort, DoMethod, ...): next
+        # to this script in the package, in os/alib in the source tree.
+        alib = next((d for d in (os.path.join(here, "alib"),
+                                 os.path.join(os.path.dirname(here), "os", "alib"))
+                     if os.path.isdir(d)), None)
+        rdir = subprocess.run([clang, "-print-resource-dir"], capture_output=True,
+                              text=True, check=True).stdout.strip()
+
+        def compile_alib(src):
+            obj = os.path.join(stubdir, "alib-" + os.path.basename(src) + ".o")
+            subprocess.run([clang, "--target=m68k-amigaos", "-Os", "-ffunction-sections",
+                            "-nostdinc", "-isystem", inc,
+                            "-isystem", os.path.join(rdir, "include"),
+                            "-c", src, "-o", obj], check=True)
+            return obj
+
+        alib_srcs = sorted(os.path.join(alib, f) for f in os.listdir(alib)
+                           if f.endswith((".c", ".S"))) if alib else []
         with concurrent.futures.ThreadPoolExecutor(os.cpu_count() or 4) as pool:
             objs = list(pool.map(assemble, sources))
+            objs += list(pool.map(compile_alib, alib_srcs))
         lib = os.path.join(libdir, "libamiga.a")
         if os.path.exists(lib):
             os.remove(lib)
@@ -218,7 +238,7 @@ def main():
         with open(rsp, "w") as f:
             f.write("\n".join('"%s"' % o.replace("\\", "/") for o in objs))
         subprocess.run([llvm_ar, "rcs", lib, "@" + rsp], check=True)
-        print("wrote %s (%d stubs)" % (lib, len(objs)))
+        print("wrote %s (%d stubs, %d amiga.lib helpers)" % (lib, len(objs) - len(alib_srcs), len(alib_srcs)))
         with open(os.path.join(libdir, "amiga-ndk.txt"), "w") as f:
             f.write("%s, installed by amiga-ndk.py\n" % NDK_NAME)
     finally:
