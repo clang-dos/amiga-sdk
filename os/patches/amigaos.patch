@@ -1,0 +1,144 @@
+diff -ruN a/aros/m68k/cpu.h b/aros/m68k/cpu.h
+--- a/aros/m68k/cpu.h	2026-11-03 02:04:25.729713416 +0000
++++ b/aros/m68k/cpu.h	2026-11-03 02:05:28.451126862 +0000
+@@ -24,6 +24,14 @@
+ #define AROS_IPTRALIGN             2 /* Alignment for IPTR */
+ #define AROS_DOUBLEALIGN           2 /* Alignment for double */
+ #define AROS_WORSTALIGN            4 /* Worst case alignment */
++
++/* amiga-sdk: the integer types of AmigaOS with a C99 compiler, as in
++   NDK 3.2: LONG and ULONG are int, IPTR is ULONG, and BPTR and BSTR
++   are long. */
++#define AROS_32BIT_TYPE            int
++#define AROS_INTPTR_TYPE           int
++#define AROS_BPTR_TYPE             long
++#define AROS_BSTR_TYPE             long
+ #define AROS_STACKALIGN            8 /* Required for aligned(8) stack objects */
+ 
+ #define AROS_SLOWSTACKFORMAT 1
+diff -ruN a/devices/timer.h b/devices/timer.h
+--- a/devices/timer.h	2026-11-03 02:04:25.726723181 +0000
++++ b/devices/timer.h	2026-11-03 02:05:36.683493334 +0000
+@@ -31,7 +31,15 @@
+ #define TR_GETSYSTIME (CMD_NONSTD+1)
+ #define TR_SETSYSTIME (CMD_NONSTD+2)
+ 
+-#include <aros/types/timeval_s.h> /* get struct timeval */
++/* amiga-sdk: as in NDK 3.2. struct TimeVal and struct TimeRequest are
++   always there; struct timeval and struct timerequest too, unless the
++   program defines __USE_NEW_TIMEVAL__ because it uses the POSIX struct
++   timeval (from <sys/time.h>), which is a different structure. */
++struct TimeVal
++{
++    ULONG tv_secs;
++    ULONG tv_micro;
++};
+ 
+ struct EClockVal
+ {
+@@ -39,10 +47,31 @@
+     ULONG ev_lo;
+ };
+ 
++struct TimeRequest
++{
++    struct IORequest tr_node;
++    struct TimeVal   tr_time;
++};
++
++#ifndef __USE_NEW_TIMEVAL__
++struct timeval
++{
++    ULONG tv_secs;
++    ULONG tv_micro;
++};
++
+ struct timerequest
+ {
+     struct IORequest tr_node;
+     struct timeval   tr_time;
+ };
+ 
++typedef struct timeval     TimeVal_Type;
++typedef struct timerequest TimeRequest_Type;
++#else
++typedef struct TimeVal     TimeVal_Type;
++typedef struct TimeRequest TimeRequest_Type;
++#endif
++#define __TIME_TYPES_DEFINED__
++
+ #endif /* DEVICES_TIMER_H */
+diff -ruN a/exec/types.h b/exec/types.h
+--- a/exec/types.h	2026-11-03 02:04:25.717897903 +0000
++++ b/exec/types.h	2026-11-03 02:05:36.682774038 +0000
+@@ -17,6 +17,11 @@
+ #   include <aros/system.h>
+ #endif
+ 
++/* amiga-sdk: as with NDK 3.2, a C99 compiler gets <stdint.h> too. */
++#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
++#   include <stdint.h>
++#endif
++
+ /*************************************
+  ***** Basic Data types          *****
+  *************************************/
+@@ -280,14 +285,26 @@
+ #endif
+ 
+ /*
+-    Minimum support library version. AROS doesn't have system libraries
+-    below V40
++    Minimum support library version (Kickstart 1.2).
+ */
+-#define LIBRARY_MINIMUM                         40
++#define LIBRARY_MINIMUM                         33
+ 
+ /*
+-    The current version of the includes. Do not use this value in calls
+-    to OpenLibrary(). Some system libraries may not be at this version. */
+-#define INCLUDE_VERSION                         40
++    The current version of the includes (amiga-sdk: the AmigaOS 3.2 API).
++    Do not use this value in calls to OpenLibrary(). Some system libraries
++    may not be at this version. */
++#define INCLUDE_VERSION                         47
++
++/* amiga-sdk: types and macros of older AmigaOS includes. */
++#define BYTEMASK                                0xFF
++#ifndef __typedef_SHORT
++#   define __typedef_SHORT
++    typedef short                               SHORT;
++    typedef unsigned short                      USHORT;
++    typedef short                               COUNT;
++    typedef unsigned short                      UCOUNT;
++    typedef ULONG                               CPTR;
++    typedef unsigned short                      RPTR;
++#endif
+ 
+ #endif /* exec/types.h */
+diff -ruN a/utility/hooks.h b/utility/hooks.h
+--- a/utility/hooks.h	2026-11-03 02:04:25.724932484 +0000
++++ b/utility/hooks.h	2026-11-03 02:05:28.451953571 +0000
+@@ -26,7 +26,7 @@
+ };
+ 
+ /* You can use this if you want for casting function pointers. */
+-typedef IPTR (*HOOKFUNC)();
++typedef unsigned long (*HOOKFUNC)();
+ 
+ /*
+     Calling conventions for Amiga Hooks.
+diff -ruN a/utility/tagitem.h b/utility/tagitem.h
+--- a/utility/tagitem.h	2026-11-03 02:04:25.724816994 +0000
++++ b/utility/tagitem.h	2026-11-03 02:05:28.451582594 +0000
+@@ -18,8 +18,8 @@
+ 
+ struct TagItem
+ {
+-    Tag         ti_Tag __attribute__((aligned(sizeof(IPTR))));   /* Tag ID                */
+-    IPTR        ti_Data __attribute__((aligned(sizeof(IPTR))));  /* Tag-specific data     */
++    Tag         ti_Tag;    /* Tag ID                */
++    IPTR        ti_Data;   /* Tag-specific data     */
+ } __attribute__((packed));
+ 
+ #ifdef AROS_SLOWSTACKTAGS
