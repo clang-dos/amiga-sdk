@@ -7,35 +7,28 @@ built with clang from [clang-dos/llvm](https://github.com/clang-dos/llvm)
 - the C library: [picolibc](https://github.com/clang-dos/picolibc) with
   an AmigaOS layer (startup code, `malloc`, files, time), and the
   compiler-rt builtins, all built for the 68000;
-- `tools/amiga-ndk.py`, which installs the AmigaOS headers and a stub for
-  every OS library function from Hyperion's NDK 3.2;
-- the amiga.lib helper functions (`os/alib`), which `amiga-ndk.py` adds
-  to `libamiga.a`;
+- the AmigaOS headers, compatible with Hyperion's NDK 3.2, built from the
+  AROS headers with the SDK's changes and additions (see
+  [os/README.md](os/README.md));
+- `libamiga.a`: a stub for every OS library function, and the amiga.lib,
+  debug.lib, ddebug.lib and reaction.lib helper functions;
 - examples, and scripts to run programs in vamos and FS-UAE.
 
-Everything here can be redistributed. The NDK can't: it is free to
-download from Aminet, but not to pass on, so `amiga-ndk.py` downloads it
-for each user (or takes a copy you have) and installs it into the sysroot.
+Everything here can be redistributed: no file comes from the NDK, which
+is used only to check that the SDK's headers match it.
+`tools/amiga-ndk.py` can still install the NDK's own headers in their
+place, for those who want them.
 
 ## Using it
 
 The clang-dos toolchain package has the sysroot in `m68k-amigaos/`, next
-to `bin/`. Install the NDK once:
-
-    python3 share/clang-dos/amiga-ndk.py
-
-This downloads `NDK3.2.lha` from Aminet (8 MB, checked against a known
-SHA-256), and writes `m68k-amigaos/include` and
-`m68k-amigaos/lib/libamiga.a`. Pass `--archive NDK3.2.lha` to use a copy
-you have, or `--sysroot DIR` for another sysroot. It needs only Python 3:
-the LHA archive is unpacked by `tools/lha.py`.
-
+to `bin/`, with the C library, the AmigaOS headers and `libamiga.a`.
 Then:
 
     clang --target=m68k-amigaos -O2 hello.c -o hello
     clang --target=m68k-amigaos -mcpu=68020 -O2 window.c -o window
 
-The driver links `crt0.o`, `libc.a`, `libamiga.a` (when installed) and
+The driver links `crt0.o`, `libc.a`, `libamiga.a` and
 the builtins with `ld.lld --emit-relocs`, and converts the result to a
 Hunk executable with `llvm-elf2hunk`. Code is for the 68000 unless
 `-mcpu=` says otherwise; the libraries are 68000 code, which runs on
@@ -55,7 +48,7 @@ every CPU.
 
 ### OS calls
 
-With the NDK installed, include `<proto/exec.h>`, `<proto/dos.h>`,
+Include `<proto/exec.h>`, `<proto/dos.h>`,
 `<proto/intuition.h>` and so on, as with other Amiga compilers. The
 calls go through `libamiga.a`, whose stubs move the arguments into the
 library's registers and call it through its base. `SysBase` and
@@ -63,49 +56,61 @@ library's registers and call it through its base. `SysBase` and
 set their base variable (`IntuitionBase`, `GfxBase`, ...), as in
 `examples/window.c`.
 
-`amiga-ndk.py` makes these changes for clang:
+`proto/*.h` declare the library base and include `clib/*_protos.h`;
+there is no inline assembly. clang has no register parameters, so
+function pointer types with register arguments (hooks, for example) are
+ordinary C ones.
 
-- `proto/*.h` are generated (prototypes from `clib/` and the library
-  base), in place of the NDK's, which include gcc's inline assembly.
-- clang has no register parameters, so the NDK's function pointer types
-  with register arguments (hooks, for example) are declared as ordinary
-  C ones; calling such a function needs inline assembly.
+### Link library functions
 
-### amiga.lib functions
+`libamiga.a` also has the helper functions of the classic link
+libraries, written for this SDK (`os/alib`):
 
-`libamiga.a` also has the helper functions of the classic `amiga.lib`,
-written for this SDK (`os/alib`), with the prototypes of
-`<clib/alib_protos.h>`:
-
-- hooks and BOOPSI: `HookEntry`, `CallHookA`/`CallHook`,
-  `DoMethodA`/`DoMethod`, `DoSuperMethodA`/`DoSuperMethod`,
-  `CoerceMethodA`/`CoerceMethod`, `SetSuperAttrs`. For a hook written in
-  C, put `HookEntry` in `h_Entry` and the C function in `h_SubEntry`; it
-  is called as `func(hook, object, message)`;
-- exec: `NewList`, `CreatePort`/`DeletePort`, `CreateExtIO`/`DeleteExtIO`,
-  `CreateStdIO`/`DeleteStdIO`, `CreateTask`/`DeleteTask`, `BeginIO`,
-  `LibCreatePool` and friends (exec's pools from V39, a simple version
-  before);
-- `TimeDelay`, `DoTimer`, `FastRand`, `RangeRand`, `ACrypt`;
-- tool types (`ArgArrayInit`, `ArgArrayDone`, `ArgString`, `ArgInt`; open
-  icon.library as `IconBase`) and commodities (`HotKey`, `InvertString`,
-  `FreeIEvents`; open commodities.library as `CxBase`).
+- amiga.lib (`<clib/alib_protos.h>`):
+  - hooks and BOOPSI: `HookEntry`, `CallHookA`/`CallHook`,
+    `DoMethodA`/`DoMethod`, `DoSuperMethodA`/`DoSuperMethod`,
+    `CoerceMethodA`/`CoerceMethod`, `SetSuperAttrs`. For a hook written in
+    C, put `HookEntry` in `h_Entry` and the C function in `h_SubEntry`; it
+    is called as `func(hook, object, message)`;
+  - exec: `NewList`, `CreatePort`/`DeletePort`, `CreateExtIO`/`DeleteExtIO`,
+    `CreateStdIO`/`DeleteStdIO`, `CreateTask`/`DeleteTask`, `BeginIO`,
+    `LibCreatePool` and friends (exec's pools from V39, a simple version
+    before);
+  - `TimeDelay`, `DoTimer`, `FastRand`, `RangeRand`, `ACrypt`,
+    `AddTOF`/`RemTOF` (a C function called at every vertical blank) and
+    `waitbeam` (open graphics.library as `GfxBase`);
+  - tool types (`ArgArrayInit`, `ArgArrayDone`, `ArgString`, `ArgInt`; open
+    icon.library as `IconBase`) and commodities (`HotKey`, `InvertString`,
+    `FreeIEvents`; open commodities.library as `CxBase`);
+- debug.lib (`<clib/debug_protos.h>`): `KPrintF`, `KPutStr`, `KPutChar`,
+  `KGetChar`, `KGetNum`, ... on the serial port, through exec's raw I/O,
+  so they work anywhere, even with interrupts off;
+- ddebug.lib (`<clib/ddebug_protos.h>`): the same as `DPrintF` and so on,
+  on the parallel port;
+- reaction.lib (`<clib/reaction_lib_protos.h>`): `ClickTabs`,
+  `ChooserLabels`, `RadioButtons`, `BrowserNodes` and their `Free*`,
+  `LBAddNode`/`LBEditNode`/`LBRemNode`, `GetAttrs`, `GetCode`,
+  `LibDoGadgetMethod` and `OpenLayoutWindowTags`. Open the class library
+  each one uses (`ClickTabBase`, ..., `LayoutBase`).
 
 `ACrypt`, `FastRand` and `RangeRand` compute what AmigaOS's do, as in
 AROS (AROS Public License); the rest is written for this SDK.
-`examples/alibtest.c` checks them; it passes on Kickstart 1.3, 2.04 and
-3.1 in FS-UAE. Not there yet: `AddTOF`/`RemTOF`, `waitbeam`, and the
-ARexx variable functions (`CheckRexxMsg`, `GetRexxVar`, `SetRexxVar`).
+`examples/alibtest.c` checks them. Not there yet: the ARexx variable
+functions (`CheckRexxMsg`, `GetRexxVar`, `SetRexxVar`) and the FFP
+conversions (see [os/README.md](os/README.md)).
 
 ## Building the sysroot
 
     BIN=/path/to/clang-dos/bin LLVM_SRC=/path/to/llvm \
     PICOLIBC_SRC=/path/to/picolibc ./build-sysroot.sh m68k-amigaos
 
-builds picolibc and the builtins (with meson, ninja and cmake) into
-`m68k-amigaos/include` and `m68k-amigaos/lib`. Set `NDK=NDK3.2.lha` to
-install the NDK as well. The clang-dos toolchain package
-(clang-dos/dos-sdk) runs this script.
+builds picolibc and the builtins (with meson, ninja and cmake), and the
+AmigaOS headers and `libamiga.a` (with `tools/aros-ndk.py`), into
+`m68k-amigaos/include`, `m68k-amigaos/fd` and `m68k-amigaos/lib`. The
+AROS headers are fetched by `tools/fetch-aros.sh` at a tested commit
+(about 30 MB, headers only), or set `AROS_SRC` to an AROS checkout. Set
+`NDK=NDK3.2.lha` to install the NDK's headers instead. The clang-dos
+toolchain package (clang-dos/dos-sdk) runs this script.
 
 ## Testing
 
@@ -114,11 +119,16 @@ install the NDK as well. The clang-dos toolchain package
 - `tools/fsuae-test.sh` boots a Workbench disk in FS-UAE under Xvfb with a
   host folder as `DH1:` and takes a screenshot. Kickstart ROMs and
   Workbench disks are your own and are never committed.
+  With `SERIAL=/dev/pts/N` the Amiga's serial port goes to that terminal,
+  where debug.lib's output appears.
 - `python3 -m unittest discover -s tests` checks the stub generator and
   the LHA reader; with `AMIGA_SDK_NETWORK=1` it also installs the NDK
   headers from Aminet.
+- `tools/ndk-compare.py` compares the SDK's headers with an NDK you have
+  (see [os/README.md](os/README.md)).
 
-The examples run on Kickstart 1.3 (A500) and 3.1 (A1200) in FS-UAE.
+The examples run in FS-UAE on Kickstart 1.3 (A500), 2.04 (A3000) and 3.1
+(A500 and A1200), with Workbench 1.3, 2.x and 3.1.
 
 ## Not done yet
 

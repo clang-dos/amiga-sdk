@@ -1,0 +1,57 @@
+# utility.def: the functions of utility.library.
+# From AROS rom/utility/utility.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base UtilityBase
+basetype struct Library
+libname utility.library
+include exec/types.h
+include exec/ports.h
+include utility/tagitem.h
+include utility/date.h
+include utility/hooks.h
+include utility/name.h
+-30 v36 struct TagItem *FindTagItem(Tag tagValue, const struct TagItem *tagList) (d0,a0)
+-36 v36 IPTR GetTagData(Tag tagValue, IPTR defaultVal, const struct TagItem *tagList) (d0,d1,a0)
+-42 v36 ULONG PackBoolTags(ULONG initialFlags, struct TagItem *tagList, struct TagItem *boolMap) (d0,a0,a1)
+-48 v36 struct TagItem *NextTagItem(struct TagItem * *tagListPtr) (a0)
+-54 v36 void FilterTagChanges(struct TagItem *changeList, const struct TagItem *originalList, ULONG apply) (a0,a1,d0)
+-60 v36 void MapTags(struct TagItem *tagList, struct TagItem *mapList, ULONG mapType) (a0,a1,d0)
+-66 v36 struct TagItem *AllocateTagItems(ULONG numTags) (d0)
+-72 v36 struct TagItem *CloneTagItems(const struct TagItem *tagList) (a0)
+-78 v36 void FreeTagItems(struct TagItem *tagList) (a0)
+-84 v36 void RefreshTagItemClones(struct TagItem *clone, const struct TagItem *original) (a0,a1)
+-90 v36 BOOL TagInArray(Tag tagValue, Tag *tagArray) (d0,a0)
+-96 v36 ULONG FilterTagItems(struct TagItem *tagList, Tag *filterArray, ULONG logic) (a0,a1,d0)
+-102 v36 IPTR CallHookPkt(struct Hook *hook, APTR object, APTR paramPacket) (a0,a2,a1)
+-120 v36 void Amiga2Date(ULONG seconds, struct ClockData *result) (d0,a0)
+-126 v36 ULONG Date2Amiga(struct ClockData *date) (a0)
+-132 v36 ULONG CheckDate(struct ClockData *date) (a0)
+-138 v36 LONG SMult32(LONG arg1, LONG arg2) (d0,d1)
+-144 v36 ULONG UMult32(ULONG arg1, ULONG arg2) (d0,d1)
+-150 v36 LONG SDivMod32(LONG dividend, LONG divisor) (d0,d1)
+-156 v36 ULONG UDivMod32(ULONG dividend, ULONG divisor) (d0,d1)
+-162 v37 LONG Stricmp(CONST_STRPTR string1, CONST_STRPTR string2) (a0,a1)
+-168 v37 LONG Strnicmp(CONST_STRPTR string1, CONST_STRPTR string2, LONG length) (a0,a1,d0)
+-174 v37 UBYTE ToUpper(ULONG character) (d0)
+-180 v37 UBYTE ToLower(ULONG character) (d0)
+-186 v39 void ApplyTagChanges(struct TagItem *list, struct TagItem *changelist) (a0,a1)
+-198 v39 LONG SMult64(LONG arg1, LONG arg2) (d0,d1)
+-204 v39 ULONG UMult64(ULONG arg1, ULONG arg2) (d0,d1)
+-210 v39 ULONG PackStructureTags(APTR pack, ULONG *packTable, struct TagItem *tagList) (a0,a1,a2)
+-216 v39 ULONG UnpackStructureTags(APTR pack, ULONG *packTable, struct TagItem *tagList) (a0,a1,a2)
+-222 v39 BOOL AddNamedObject(struct NamedObject *nameSpace, struct NamedObject *object) (a0,a1)
+-228 v39 struct NamedObject *AllocNamedObjectA(CONST_STRPTR name, struct TagItem *tagList) (a0,a1)
+= struct NamedObject *AllocNamedObject(CONST_STRPTR name, Tag tag1, ...)
+-234 v39 LONG AttemptRemNamedObject(struct NamedObject *object) (a0)
+-240 v39 struct NamedObject *FindNamedObject(struct NamedObject *nameSpace, CONST_STRPTR name, struct NamedObject *lastObject) (a0,a1,a2)
+-246 v39 void FreeNamedObject(struct NamedObject *object) (a0)
+-252 v39 STRPTR NamedObjectName(struct NamedObject *object) (a0)
+-258 v39 void ReleaseNamedObject(struct NamedObject *object) (a0)
+-264 v39 void RemNamedObject(struct NamedObject *object, struct Message *message) (a0,a1)
+-270 v39 ULONG GetUniqueID(void) ()
+-312 v47 LONG VSNPrintf(STRPTR buffer, ULONG buffer_size, CONST_STRPTR format, APTR args) (a0,d0,a1,a2)
+= LONG SNPrintf(STRPTR buffer, ULONG buffer_size, CONST_STRPTR format, ...)
+-438 v47 STRPTR Strncpy(STRPTR dst, CONST_STRPTR src, ULONG size) (a1,a0,d0)
+-444 v47 STRPTR Strncat(STRPTR dst, CONST_STRPTR src, ULONG size) (a1,a0,d0)
+-450 v47 LONG SDivMod64(LONG hi, LONG lo, LONG divisor) (d1,d0,d2)
+-456 v47 ULONG UDivMod64(ULONG hi, ULONG lo, ULONG divisor) (d1,d0,d2)

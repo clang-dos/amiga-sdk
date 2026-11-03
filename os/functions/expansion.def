@@ -1,0 +1,29 @@
+# expansion.def: the functions of expansion.library.
+# From AROS rom/expansion/expansion.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base ExpansionBase
+basetype struct ExpansionBase
+libname expansion.library
+include dos/filehandler.h
+include libraries/configvars.h
+-30 v33 void AddConfigDev(struct ConfigDev *configDev) (a0)
+-36 v36 BOOL AddBootNode(LONG bootPri, ULONG flags, struct DeviceNode *deviceNode, struct ConfigDev *configDev) (d0,d1,a0,a1)
+-42 v33 void AllocBoardMem(ULONG slotSpec) (d0)
+-48 v33 struct ConfigDev *AllocConfigDev(void) ()
+-54 v33 APTR AllocExpansionMem(ULONG numSlots, ULONG slotAlign) (d0,d1)
+-60 v33 VOID ConfigBoard(APTR board, struct ConfigDev *configDev) (a0,a1)
+-66 v33 void ConfigChain(APTR baseAddr) (a0)
+-72 v33 struct ConfigDev *FindConfigDev(struct ConfigDev *oldConfigDev, LONG manufacturer, LONG product) (a0,d0,d1)
+-78 v33 void FreeBoardMem(ULONG startSlot, ULONG slotSpec) (d0,d1)
+-84 v33 void FreeConfigDev(struct ConfigDev *configDev) (a0)
+-90 v33 void FreeExpansionMem(ULONG startSlot, ULONG numSlots) (d0,d1)
+-96 v33 UBYTE ReadExpansionByte(APTR board, ULONG offset) (a0,d0)
+-102 v33 VOID ReadExpansionRom(APTR board, struct ConfigDev *configDev) (a0,a1)
+-108 v33 void RemConfigDev(struct ConfigDev *configDev) (a0)
+-114 v33 void WriteExpansionByte(APTR board, ULONG offset, ULONG byte) (a0,d0,d1)
+-120 v33 void ObtainConfigBinding(void) ()
+-126 v33 void ReleaseConfigBinding(void) ()
+-132 v33 void SetCurrentBinding(struct CurrentBinding *currentBinding, ULONG bindingSize) (a0,d0)
+-138 v33 ULONG GetCurrentBinding(struct CurrentBinding *currentBinding, ULONG bindingSize) (a0,d0)
+-144 v33 struct DeviceNode *MakeDosNode(APTR parmPacket) (a0)
+-150 v33 BOOL AddDosNode(LONG bootPri, ULONG flags, struct DeviceNode *deviceNode) (d0,d1,a0)

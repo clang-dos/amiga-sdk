@@ -1,0 +1,7 @@
+# arexx.def: the functions of arexx.class.
+# Written for amiga-sdk; checked against the AmigaOS ABI with tools/ndk-compare.py.
+base ARexxBase
+basetype struct Library
+libname arexx.class
+include intuition/classes.h
+-30 Class *AREXX_GetClass(void) ()

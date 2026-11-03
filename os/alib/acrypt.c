@@ -1,6 +1,6 @@
 /*
  * amiga.lib: ACrypt(), the password hash of AmigaOS (as in AROS).
- * Part of the Amiga SDK (README.md, "amiga.lib functions").
+ * Part of the Amiga SDK; see os/README.md.
  */
 #include <exec/types.h>
 #include <clib/alib_protos.h>

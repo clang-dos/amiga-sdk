@@ -1,0 +1,10 @@
+# getfile.def: the functions of getfile.gadget.
+# From AROS workbench/classes/reaction/getfile/getfile.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base GetFileBase
+basetype struct Library
+libname getfile.gadget
+include intuition/classes.h
+include intuition/gadgetclass.h
+include gadgets/getfile.h
+-30 Class *GETFILE_GetClass(void) ()

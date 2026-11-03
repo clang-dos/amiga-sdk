@@ -1,0 +1,10 @@
+# datebrowser.def: the functions of datebrowser.gadget.
+# Written for amiga-sdk; checked against the AmigaOS ABI with tools/ndk-compare.py.
+base DateBrowserBase
+basetype struct Library
+libname datebrowser.gadget
+include intuition/classes.h
+-30 Class *DATEBROWSER_GetClass(void) ()
+-36 UWORD JulianWeekDay(ULONG day, ULONG month, LONG year) (d0,d1,d2)
+-42 UWORD JulianMonthDays(ULONG month, LONG year) (d0,d1)
+-48 BOOL JulianLeapYear(LONG year) (d0)

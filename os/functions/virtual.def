@@ -1,0 +1,10 @@
+# virtual.def: the functions of virtual.gadget.
+# Written for amiga-sdk; checked against the AmigaOS ABI with tools/ndk-compare.py.
+base VirtualBase
+basetype struct Library
+libname virtual.gadget
+include intuition/classes.h
+include intuition/intuition.h
+-30 Class *VIRTUAL_GetClass(void) ()
+-36 VOID RefreshVirtualGadget(struct Gadget *gadget, Object *obj, struct Window *window, struct Requester *requester) (a0,a1,a2,a3)
+-42 BOOL RethinkVirtualSize(Object *virt_obj, Object *rootlayout, struct TextFont *font, struct Screen *screen, struct LayoutLimits *layoutlimits) (a0,a1,a2,a3,d0)

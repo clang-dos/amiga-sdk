@@ -1,0 +1,18 @@
+# mathieeedoubbas.def: the functions of mathieeedoubbas.library.
+# From AROS workbench/libs/mathieeedoubbas/mathieeedoubbas.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base MathIeeeDoubBasBase
+basetype struct MathIEEEBase
+libname mathieeedoubbas.library
+-30 LONG IEEEDPFix(double y) (d0,d1)
+-36 double IEEEDPFlt(LONG y) (d0)
+-42 LONG IEEEDPCmp(double y, double z) (d0,d1,d2,d3)
+-48 LONG IEEEDPTst(double y) (d0,d1)
+-54 double IEEEDPAbs(double y) (d0,d1)
+-60 double IEEEDPNeg(double y) (d0,d1)
+-66 double IEEEDPAdd(double y, double z) (d0,d1,d2,d3)
+-72 double IEEEDPSub(double y, double z) (d0,d1,d2,d3)
+-78 double IEEEDPMul(double y, double z) (d0,d1,d2,d3)
+-84 double IEEEDPDiv(double y, double z) (d0,d1,d2,d3)
+-90 v33 double IEEEDPFloor(double y) (d0,d1)
+-96 v33 double IEEEDPCeil(double y) (d0,d1)

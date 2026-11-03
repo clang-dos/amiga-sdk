@@ -1,0 +1,10 @@
+# penmap.def: the functions of penmap.image.
+# From AROS workbench/classes/reaction/penmap/penmap.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base PenMapBase
+basetype struct Library
+libname penmap.image
+include intuition/classes.h
+include intuition/imageclass.h
+include images/penmap.h
+-30 Class *PENMAP_GetClass(void) ()

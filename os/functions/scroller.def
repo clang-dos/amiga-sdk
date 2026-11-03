@@ -1,0 +1,10 @@
+# scroller.def: the functions of scroller.gadget.
+# From AROS workbench/classes/reaction/scroller/scroller.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base ScrollerBase
+basetype struct Library
+libname scroller.gadget
+include intuition/classes.h
+include intuition/gadgetclass.h
+include gadgets/scroller.h
+-30 Class *SCROLLER_GetClass(void) ()

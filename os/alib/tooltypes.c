@@ -1,7 +1,7 @@
 /*
  * amiga.lib: tool type arguments (ArgArrayInit() and friends).
  * They use icon.library: the program opens it as IconBase.
- * Part of the Amiga SDK (README.md, "amiga.lib functions").
+ * Part of the Amiga SDK; see os/README.md.
  */
 #include <exec/types.h>
 #include <exec/memory.h>

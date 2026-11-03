@@ -1,0 +1,3599 @@
+diff -ruN a/aros/m68k/cpu.h b/aros/m68k/cpu.h
+--- a/aros/m68k/cpu.h	2026-11-03 02:04:25.729713416 +0000
++++ b/aros/m68k/cpu.h	2026-11-03 06:30:53.847433349 +0000
+@@ -24,6 +24,14 @@
+ #define AROS_IPTRALIGN             2 /* Alignment for IPTR */
+ #define AROS_DOUBLEALIGN           2 /* Alignment for double */
+ #define AROS_WORSTALIGN            4 /* Worst case alignment */
++
++/* amiga-sdk: the integer types of AmigaOS with a C99 compiler, as in
++   NDK 3.2: LONG and ULONG are int, IPTR is ULONG, and BPTR and BSTR
++   are long. */
++#define AROS_32BIT_TYPE            int
++#define AROS_INTPTR_TYPE           int
++#define AROS_BPTR_TYPE             long
++#define AROS_BSTR_TYPE             long
+ #define AROS_STACKALIGN            8 /* Required for aligned(8) stack objects */
+ 
+ #define AROS_SLOWSTACKFORMAT 1
+@@ -79,7 +87,7 @@
+ 
+ 
+ /* Use these to acces a vector table */
+-#define LIB_VECTSIZE                    (sizeof (struct JumpVec))
++#define LIB_VECTSIZE                    6       /* jmp abs.l, a signed int as in AmigaOS */
+ #define __AROS_GETJUMPVEC(lib,n)        (&(((struct JumpVec *)(lib))[-(n)]))
+ #define __AROS_GETVECADDR(lib,n)        ((void *)__AROS_GETJUMPVEC(lib,n))
+ #define __AROS_SETVECADDR(lib,n,addr)   (__AROS_SET_VEC(__AROS_GETJUMPVEC(lib,n),(APTR)(addr)))
+diff -ruN a/classes/requester.h b/classes/requester.h
+--- a/classes/requester.h	2026-11-03 02:04:25.724125198 +0000
++++ b/classes/requester.h	2026-11-03 05:56:45.295514152 +0000
+@@ -133,4 +133,23 @@
+ #define RequesterObject         NewObject(REQUESTER_GetClass(), NULL
+ #endif
+ 
++/* Requester class V45-V47 attributes */
++#define REQ_VarArgs             (REQ_Dummy+8)   /* APTR: arguments for format codes in the texts */
++#define REQ_EvenButtons         (REQ_Dummy+9)   /* BOOL: give all buttons the same width */
++#define REQ_WrapBorder          (REQ_Dummy+10)  /* ULONG: wrap body text at this width */
++#define REQ_TimeOutSecs         (REQ_Dummy+11)  /* ULONG: close by itself after this many seconds */
++#define REQ_IDCMP_Ptr           (REQ_Dummy+12)  /* ULONG *: IDCMP flags that also end the requester */
++#define REQ_Inactive            (REQ_Dummy+13)  /* BOOL: open without activating */
++#define REQ_CharSet             (REQ_Dummy+14)  /* ULONG: character set of the texts */
++#define REQ_StayOnTop           (REQ_Dummy+15)  /* BOOL: keep in front of other windows */
++#define REQ_ForceFocus          (REQ_Dummy+16)  /* BOOL: take the input focus */
++
++#define REQS_Mark               (REQS_Dummy+7)  /* BOOL: select the initial text */
++#define REQS_ReturnEnds         (REQS_Dummy+8)  /* BOOL: Return closes the requester */
++
++#define REQI_MinText            (REQI_Dummy+7)  /* STRPTR: label for the minimum */
++#define REQI_MaxText            (REQI_Dummy+8)  /* STRPTR: label for the maximum */
++#define REQI_Mark               (REQI_Dummy+9)  /* BOOL: select the initial number */
++#define REQI_ReturnEnds         (REQI_Dummy+10) /* BOOL: Return closes the requester */
++
+ #endif /* CLASSES_REQUESTER_H */
+diff -ruN a/classes/window.h b/classes/window.h
+--- a/classes/window.h	2026-11-03 02:04:25.724093871 +0000
++++ b/classes/window.h	2026-11-03 05:56:13.009094211 +0000
+@@ -89,9 +89,9 @@
+ 
+ #define WINDOW_HintInfo         (WINDOW_Dummy + 43) /* struct HintInfo * â€” array of gadget help hints */
+ 
+-#define WINDOW_NewMenu          (WINDOW_Dummy + 44) /* struct NewMenu * â€” menu strip created via GadTools and attached while open */
++#define WINDOW_NewMenu          (WINDOW_Dummy + 52) /* struct NewMenu * â€” menu strip created via GadTools and attached while open */
+ 
+-#define WINDOW_IconNoDispose    (WINDOW_Dummy + 45) /* BOOL â€” never dispose the WINDOW_Icon DiskObject */
++#define WINDOW_IconNoDispose    (WINDOW_Dummy + 51) /* BOOL â€” never dispose the WINDOW_Icon DiskObject */
+ 
+ #define WINDOW_InterpretIDCMPHook   (WINDOW_Dummy + 46) /* BOOL â€” process IDCMPHook return values */
+ 
+@@ -101,7 +101,7 @@
+ 
+ #define WINDOW_AppWindowPtr     (WINDOW_Dummy + 50) /* struct AppWindow * â€” gettable pointer from AddAppWindow() */
+ 
+-#define WINDOW_Qualifier        (WINDOW_Dummy + 51) /* UWORD - input qualifiers of the last handled IDCMP message (get only) */
++#define WINDOW_Qualifier        (WINDOW_Dummy + 53) /* UWORD - input qualifiers of the last handled IDCMP message (get only) */
+ 
+ /* Private */
+ #define WINDOW_VertProp         (WINDOW_Dummy + 27) /* BOOL â€” enable vertical border scroller */
+@@ -143,6 +143,9 @@
+ #define WMHI_MOUSEMOVE          (15<<16)    /* pointer movement */
+ #define WMHI_MOUSEBUTTONS       (16<<16)    /* mouse button event */
+ #define WMHI_DISPOSEDWINDOW     (17<<16)    /* window disposed via hook */
++#define WMHI_JUMPSCREEN         (18<<16)    /* moved to another screen */
++#define WMHI_POPUPMENU          (19<<16)    /* context menu request */
++#define WMHI_GADGETDOWN         (20<<16)    /* gadget pressed */
+ 
+ /****************************************************************************/
+ 
+@@ -161,6 +164,7 @@
+ #define WPOS_TOPLEFT            (3L)    /* screen top-left corner */
+ #define WPOS_CENTERWINDOW       (4L)    /* centered over ref window */
+ #define WPOS_FULLSCREEN         (5L)    /* fill entire screen */
++#define WPOS_ENTIRESCREEN       (6L)    /* cover the whole screen, title bar too */
+ 
+ /****************************************************************************/
+ 
+@@ -181,8 +185,11 @@
+ #define WM_RETHINK      (0x570006L)
+ 
+ #define WM_UNICONIFY    WM_OPEN     /* restore is equivalent to open */
+-/* AROS extension */
+-#define WM_SNAPSHOT     (0x570007L)
++/* More window methods (V47) */
++#define WM_ACTIVATEGADGET (0x570007L)
++#define WM_SNAPSHOT     (0x570008L)
++#define WM_UNSNAPSHOT   (0x570009L)
++#define WM_RESTORE      (0x570010L)
+ 
+ /****************************************************************************/
+ 
+@@ -208,4 +215,42 @@
+ #define EndWindow           TAG_END)
+ #endif
+ 
++/* Window class V45-V47 attributes */
++#define WINDOW_KillWindow       (WINDOW_Dummy + 44) /* (BOOL) close the window, keep the object */
++#define WINDOW_Application      (WINDOW_Dummy + 45) /* (Object *) owning application object */
++#define WINDOW_Parent           (WINDOW_Dummy + 47) /* (Object *) parent window object */
++#define WINDOW_CharSet          (WINDOW_Dummy + 54) /* (ULONG) character set of the strings */
++#define WINDOW_BuiltInScroll    (WINDOW_Dummy + 55) /* (BOOL) handle border scrollers internally */
++#define WINDOW_IDCMPSnoopHook   (WINDOW_Dummy + 56) /* (struct Hook *) sees every IDCMP message */
++#define WINDOW_ShowingHint      (WINDOW_Dummy + 57) /* (BOOL) a help bubble is open (get only) */
++#define WINDOW_NewPrefsHook     (WINDOW_Dummy + 58) /* (struct Hook *) called on WM_NEWPREFS */
++#define WINDOW_Iconifiable      (WINDOW_Dummy + 59) /* (BOOL) allow iconification */
++#define WINDOW_PopupGadget      (WINDOW_Dummy + 60) /* (BOOL) add a popup menu gadget */
++#define WINDOW_PopupHook        (WINDOW_Dummy + 61) /* (struct Hook *) builds the popup menu */
++#define WINDOW_PopupItem        (WINDOW_Dummy + 62) /* (ULONG) chosen popup item (get only) */
++#define WINDOW_JumpScreensMenu  (WINDOW_Dummy + 63) /* (BOOL) offer a "jump to screen" menu */
++#define WINDOW_UniqueID         (WINDOW_Dummy + 64) /* (STRPTR) id used to save the position */
++#define WINDOW_MenuAddress      (WINDOW_Dummy + 65) /* (APTR) menu chosen last (get only) */
++#define WINDOW_MenuType         (WINDOW_Dummy + 66) /* (ULONG) kind of WINDOW_MenuAddress */
++#define WINDOW_MenuContext      (WINDOW_Dummy + 67) /* (APTR) context of the context menu */
++
++/* Return values of a WINDOW_IDCMPHook with WINDOW_InterpretIDCMPHook */
++#define WHOOKRSLT_IGNORE         0
++#define WHOOKRSLT_CLOSEWINDOW    1
++#define WHOOKRSLT_DISPOSEWINDOW  2
++
++/* WM_ACTIVATEGADGET */
++struct wmActivateGadget
++{
++    ULONG          MethodID;
++    struct Gadget *wma_Object;  /* the gadget to activate */
++};
++
++/* WM_SNAPSHOT, WM_UNSNAPSHOT */
++struct wmSnapshot
++{
++    ULONG MethodID;
++    ULONG How;     /* what to save or restore */
++};
++
+ #endif /* CLASSES_WINDOW_H */
+diff -ruN a/datatypes/datatypes.h b/datatypes/datatypes.h
+--- a/datatypes/datatypes.h	2026-11-03 02:04:25.719454574 +0000
++++ b/datatypes/datatypes.h	2026-11-03 06:00:35.947868987 +0000
+@@ -207,6 +207,9 @@
+ #define DTMSG_TYPE_OFFSET               2100
+ 
+ 
++#define DTERROR_NOT_AVAILABLE   2009    /* the object can't do this */
++#define TSIZE                   8       /* size of a struct DTHookContext tool tip */
++
+ #endif /* DATATYPES_DATATYPES_H */
+ 
+ 
+diff -ruN a/datatypes/datatypesclass.h b/datatypes/datatypesclass.h
+--- a/datatypes/datatypesclass.h	2026-11-03 02:04:25.719373041 +0000
++++ b/datatypes/datatypesclass.h	2026-11-03 05:59:16.474211571 +0000
+@@ -458,4 +458,17 @@
+ #define  DTWM_RAW        1
+ 
+ 
++/* Object position and size, relative to the domain (V47) */
++#define DTA_Left            (DTA_Dummy + 105)
++#define DTA_Top             (DTA_Dummy + 106)
++#define DTA_Width           (DTA_Dummy + 107)
++#define DTA_Height          (DTA_Dummy + 108)
++#define DTA_RelRight        (DTA_Dummy + 117)
++#define DTA_RelBottom       (DTA_Dummy + 118)
++#define DTA_RelWidth        (DTA_Dummy + 119)
++#define DTA_RelHeight       (DTA_Dummy + 120)
++
++#define STM_HELP            17
++#define STM_UNRETRACE       21
++
+ #endif /* DATATYPES_DATATYPESCLASS_H */
+diff -ruN a/datatypes/pictureclass.h b/datatypes/pictureclass.h
+--- a/datatypes/pictureclass.h	2026-11-03 02:04:25.719481477 +0000
++++ b/datatypes/pictureclass.h	2026-11-03 06:00:35.917542249 +0000
+@@ -169,4 +169,24 @@
+ 
+ #endif /* DT_V44_SUPPORT */
+ 
++
++/* PDTM_OBTAINPIXELARRAY (V47) */
++struct pdtObtainPixelArray
++{
++    ULONG                     MethodID;
++    struct pdtBlitPixelArray *popa_PixelArray;  /* filled in */
++    ULONG                     popa_Flags;
++};
++
++/* picture.datatype V47 additions */
++#define PDTA_AlphaChannel       (DTA_Dummy + 256)   /* (BOOL) picture has alpha */
++#define PDTA_ForeignPlaceholder1 (DTA_Dummy + 259)
++#define PDTA_ObtainPixelBuffer  (DTA_Dummy + 260)
++#define PDTA_SubClassRendersAll (DTA_Dummy + 261)
++#define PDTM_OBTAINPIXELARRAY   (PDTM_Dummy + 7)
++
++/* Flags for PDTM_OBTAINPIXELARRAY */
++#define POBAB_WRITEGREY8        0
++#define POPAF_WRITEGREY8        (1<<POBAB_WRITEGREY8)
++
+ #endif  /* DATATYPES_PICTURECLASS_H */
+diff -ruN a/datatypes/soundclass.h b/datatypes/soundclass.h
+--- a/datatypes/soundclass.h	2026-11-03 02:04:25.719300091 +0000
++++ b/datatypes/soundclass.h	2026-11-03 06:00:35.932657522 +0000
+@@ -88,4 +88,6 @@
+ #define ID_CHAN	    	    	MAKE_ID('C','H','A','N')
+ #define ID_BODY	    	    	MAKE_ID('B','O','D','Y')
+ 
++#define SDTA_BitsPerSample      (SDTA_Dummy + 18)   /* (UWORD) 8 or 16 */
++
+ #endif  /* DATATYPES_SOUNDCLASS_H */
+diff -ruN a/devices/cd.h b/devices/cd.h
+--- a/devices/cd.h	2026-11-03 02:04:25.726915723 +0000
++++ b/devices/cd.h	2026-11-03 05:57:10.231267956 +0000
+@@ -1,6 +1,9 @@
+ #ifndef DEVICES_CD_H
+ #define DEVICES_CD_H
+ 
++/* included by the AmigaOS header too */
++#include <exec/nodes.h>
++
+ /*
+     Copyright © 1995-2001, The AROS Development Team. All rights reserved.
+     $Id$
+@@ -226,4 +229,22 @@
+ #define CD_REMFRAMEINT  46
+ 
+ 
++/* Q-channel control and address nibbles (TOC and Q-code) */
++#define CTLADR_CTLMASK  0xF0    /* upper nibble: control */
++#define CTLADR_ADRMASK  0x0F    /* lower nibble: address mode */
++
++#define CTL_CTLMASK     0xD0    /* track type bits */
++#define CTL_2AUD        0x00    /* two channel audio */
++#define CTL_2AUDEMPH    0x10    /* ... with pre-emphasis */
++#define CTL_4AUD        0x80    /* four channel audio */
++#define CTL_4AUDEMPH    0x90    /* ... with pre-emphasis */
++#define CTL_DATA        0x40    /* data track */
++#define CTL_COPYMASK    0x20
++#define CTL_COPY        0x20    /* digital copy allowed */
++
++#define ADR_POSITION    0x01    /* Q-code holds the position */
++#define ADR_UPC         0x02    /* ... the catalogue number */
++#define ADR_ISRC        0x03    /* ... the recording code */
++#define ADR_HYBRID      0x05    /* hybrid disc */
++
+ #endif /* DEVICES_CD_H */
+diff -ruN a/devices/clipboard.h b/devices/clipboard.h
+--- a/devices/clipboard.h	2026-11-03 02:04:25.727186682 +0000
++++ b/devices/clipboard.h	2026-11-03 06:00:35.963289044 +0000
+@@ -67,4 +67,6 @@
+     LONG  chm_ClipID;
+ };
+ 
++#define CBERR_OBSOLETEID        1
++
+ #endif /* DEVICES_CLIPBOARD_H */
+diff -ruN a/devices/console.h b/devices/console.h
+--- a/devices/console.h	2026-11-03 02:04:25.727611883 +0000
++++ b/devices/console.h	2026-11-03 06:00:35.978902894 +0000
+@@ -88,4 +88,16 @@
+ #define M_ASM	">1"
+ #define M_AWM	"?7"
+ 
++
++/* the console's scroll-back settings (V47) */
++struct ConsoleScrollback
++{
++    APTR  cs_ScrollerGadget;
++    UWORD cs_NumLines;
++};
++
++/* Scrollback buffer commands (V47) */
++#define CD_SETUPSCROLLBACK          13
++#define CD_SETSCROLLBACKPOSITION    14
++
+ #endif /* DEVICES_CONSOLE_H */
+diff -ruN a/devices/gameport.h b/devices/gameport.h
+--- a/devices/gameport.h	2026-11-03 02:04:25.727560998 +0000
++++ b/devices/gameport.h	2026-11-03 06:00:35.992972084 +0000
+@@ -1,6 +1,9 @@
+ #ifndef DEVICES_GAMEPORT_H
+ #define DEVICES_GAMEPORT_H
+ 
++/* included by the AmigaOS header too */
++#include <exec/types.h>
++
+ /*
+     Copyright © 1995-2001, The AROS Development Team. All rights reserved.
+     $Id$
+@@ -50,4 +53,6 @@
+ #define GPCT_RELJOYSTICK	2
+ #define GPCT_ABSJOYSTICK	3
+ 
++#define GPDERR_SETCTYPE     1       /* this controller type is not allowed */
++
+ #endif /* DEVICES_GAMEPORT_H */
+diff -ruN a/devices/inputevent.h b/devices/inputevent.h
+--- a/devices/inputevent.h	2026-11-03 02:04:25.726616825 +0000
++++ b/devices/inputevent.h	2026-11-03 06:01:08.976616563 +0000
+@@ -83,7 +83,7 @@
+ /* NewMouse standard */
+ #define IECLASS_NEWMOUSE       22
+ 
+-#define IECLASS_MAX            22
++#define IECLASS_MAX            21  /* last class defined by the OS; NewMouse is an add-on */
+ 
+ /* InputEvent SubClasses */
+ #define IESUBCLASS_COMPATIBLE 0
+@@ -201,4 +201,8 @@
+     struct TagItem * ient_TagList;
+ };
+ 
++/* The range of control codes (C0) */
++#define IECODE_C0_FIRST     0x00
++#define IECODE_C0_LAST      0x1F
++
+ #endif /* DEVICES_INPUTEVENT_H */
+diff -ruN a/devices/newstyle.h b/devices/newstyle.h
+--- a/devices/newstyle.h	2026-11-03 02:04:25.726943319 +0000
++++ b/devices/newstyle.h	2026-11-03 06:00:36.025720445 +0000
+@@ -1,6 +1,9 @@
+ #ifndef DEVICES_NEWSTYLE_H
+ #define DEVICES_NEWSTYLE_H
+ 
++/* included by the AmigaOS header too */
++#include <exec/types.h>
++
+ /*
+     Copyright © 1995-2011, The AROS Development Team. All rights reserved.
+     $Id$
+@@ -14,16 +17,12 @@
+ struct NSDeviceQueryResult
+ {
+     /* Reset the following members for every query */
+-
+-    ULONG  DevQueryFormat;
+-    ULONG  SizeAvailable;
+-    
++    ULONG  nsdqr_DevQueryFormat;    /* 0 */
++    ULONG  nsdqr_SizeAvailable;     /* bytes filled in */
+     /* Common information (read only) */
+-    
+-    UWORD  DeviceType;
+-    UWORD  DeviceSubType;
+-    UWORD *SupportedCommands;
+-    
++    UWORD  nsdqr_DeviceType;
++    UWORD  nsdqr_DeviceSubType;
++    APTR   nsdqr_SupportedCommands; /* 0-terminated UWORD array */
+     /* May be extended. So check SizeAvailable! */
+ };
+ 
+@@ -59,4 +58,6 @@
+ 
+ #endif /* NSCMD_TD_READ64 */
+ 
++#define NSDEVTYPE_AUDIOARD  8       /* AHI-style audio card */
++
+ #endif /* DEVICES_NEWSTYLE_H */
+diff -ruN a/devices/printer.h b/devices/printer.h
+--- a/devices/printer.h	2026-11-03 02:04:25.726770961 +0000
++++ b/devices/printer.h	2026-11-03 05:40:01.113254010 +0000
+@@ -1,6 +1,13 @@
+ #ifndef DEVICES_PRINTER_H
+ #define DEVICES_PRINTER_H
+ 
++/* included by the AmigaOS header too */
++#include <exec/types.h>
++#include <exec/nodes.h>
++#include <exec/lists.h>
++#include <exec/ports.h>
++#include <exec/io.h>
++
+ /*
+     Copyright © 1995-2026, The AROS Development Team. All rights reserved.
+     $Id$
+diff -ruN a/devices/prtbase.h b/devices/prtbase.h
+--- a/devices/prtbase.h	2026-11-03 02:04:25.726590039 +0000
++++ b/devices/prtbase.h	2026-11-03 06:00:36.041266558 +0000
+@@ -1,6 +1,14 @@
+ #ifndef DEVICES_PRTBASE_H
+ #define DEVICES_PRTBASE_H
+ 
++/* included by the AmigaOS header too */
++#include <exec/nodes.h>
++#include <exec/lists.h>
++#include <exec/ports.h>
++#include <exec/libraries.h>
++#include <exec/tasks.h>
++#include <libraries/dosextens.h>
++
+ /*
+     Copyright © 1995-2001, The AROS Development Team. All rights reserved.
+     $Id$
+@@ -250,4 +258,10 @@
+     /* .. more driver private fields following .. */
+ };
+ 
++/* pd_Flags */
++#define PF_IOR0         (1<<0)
++#define PF_IOR1         (1<<1)
++#define PF_IOOPENDED    (1<<2)
++#define PF_EXPUNGED     (1<<7)
++
+ #endif /* DEVICES_PRTBASE_H */
+diff -ruN a/devices/prtgfx.h b/devices/prtgfx.h
+--- a/devices/prtgfx.h	2026-11-03 02:04:25.727024033 +0000
++++ b/devices/prtgfx.h	2026-11-03 05:40:01.116154888 +0000
+@@ -1,6 +1,9 @@
+ #ifndef DEVICES_PRTGFX_H
+ #define DEVICES_PRTGFX_H
+ 
++/* included by the AmigaOS header too */
++#include <devices/prtbase.h>
++
+ /*
+     Copyright © 1995-2001, The AROS Development Team. All rights reserved.
+     $Id$
+@@ -83,4 +86,10 @@
+ };
+ 
+ 
++
++struct WordColorEntry
++{
++    WORD ColorWord[4];      /* one per Y, M, C, B */
++};
++
+ #endif /* DEVICES_PRTGFX_H */
+diff -ruN a/devices/timer.h b/devices/timer.h
+--- a/devices/timer.h	2026-11-03 02:04:25.726723181 +0000
++++ b/devices/timer.h	2026-11-03 02:05:36.683493334 +0000
+@@ -31,7 +31,15 @@
+ #define TR_GETSYSTIME (CMD_NONSTD+1)
+ #define TR_SETSYSTIME (CMD_NONSTD+2)
+ 
+-#include <aros/types/timeval_s.h> /* get struct timeval */
++/* amiga-sdk: as in NDK 3.2. struct TimeVal and struct TimeRequest are
++   always there; struct timeval and struct timerequest too, unless the
++   program defines __USE_NEW_TIMEVAL__ because it uses the POSIX struct
++   timeval (from <sys/time.h>), which is a different structure. */
++struct TimeVal
++{
++    ULONG tv_secs;
++    ULONG tv_micro;
++};
+ 
+ struct EClockVal
+ {
+@@ -39,10 +47,31 @@
+     ULONG ev_lo;
+ };
+ 
++struct TimeRequest
++{
++    struct IORequest tr_node;
++    struct TimeVal   tr_time;
++};
++
++#ifndef __USE_NEW_TIMEVAL__
++struct timeval
++{
++    ULONG tv_secs;
++    ULONG tv_micro;
++};
++
+ struct timerequest
+ {
+     struct IORequest tr_node;
+     struct timeval   tr_time;
+ };
+ 
++typedef struct timeval     TimeVal_Type;
++typedef struct timerequest TimeRequest_Type;
++#else
++typedef struct TimeVal     TimeVal_Type;
++typedef struct TimeRequest TimeRequest_Type;
++#endif
++#define __TIME_TYPES_DEFINED__
++
+ #endif /* DEVICES_TIMER_H */
+diff -ruN a/devices/trackdisk.h b/devices/trackdisk.h
+--- a/devices/trackdisk.h	2026-11-03 02:04:25.726352326 +0000
++++ b/devices/trackdisk.h	2026-11-03 06:00:36.056874110 +0000
+@@ -121,6 +121,8 @@
+     UWORD tdu_CurrTrk;
+     ULONG tdu_CalibrateDelay;
+     ULONG tdu_Counter;
++    ULONG tdu_PostWriteDelay;
++    ULONG tdu_SideSelectDelay;
+ };
+ 
+ /* tdu_PubFlags */
+@@ -148,4 +150,8 @@
+ #define TDERR_DriveInUse     34
+ #define TDERR_PostReset      35
+ 
++#define NUMSECS         11      /* sectors per track, double density */
++#define NUMUNITS        4       /* drives */
++#define DRIVE5_25       2       /* TD_GETDRIVETYPE: 5.25" 40 tracks */
++
+ #endif /* DEVICES_TRACKDISK_H */
+diff -ruN a/diskfont/diskfont.h b/diskfont/diskfont.h
+--- a/diskfont/diskfont.h	2026-11-03 02:04:25.720820578 +0000
++++ b/diskfont/diskfont.h	2026-11-03 05:59:16.540192946 +0000
+@@ -92,5 +92,42 @@
+ 	UWORD	afh_NumEntries;
+ };
+ 
++
++struct GlyphEngine;
++struct TagItem;
++
++/* For OpenOutlineFont() (V47) */
++struct EGlyphEngine
++{
++    APTR                ege_Reserved;       /* private */
++    struct Library     *ege_BulletBase;
++    struct GlyphEngine *ege_GlyphEngine;
++};
++
++struct OutlineFont
++{
++    STRPTR              olf_OTagPath;       /* the .otag file */
++    struct TagItem     *olf_OTagList;       /* its tags, in memory */
++    STRPTR              olf_EngineName;
++    STRPTR              olf_LibraryName;    /* engine name + ".library" */
++    struct EGlyphEngine olf_EEngine;        /* NULL without OFF_OPEN */
++    APTR                olf_Reserved;
++    APTR                olf_UserData;
++};
++
++/* AvailFonts() flags and results (V47) */
++#define AFB_OTAG        4
++#define AFF_OTAG        (1<<AFB_OTAG)       /* outline fonts with .otag files */
++#define AFF_CHARSET     (1<<5)              /* fill in the character set */
++#define AFB_TYPE        6
++#define AFF_TYPE        (1<<AFB_TYPE)       /* report the font type */
++
++/* OpenDiskFont() flags */
++#define OFB_OPEN        0
++#define OFF_OPEN        (1<<OFB_OPEN)
++
++/* Extra TTextAttr tag: character set of the font */
++#define TA_CharSet      (TAG_USER + 3)
++
+ #endif
+ 
+diff -ruN a/diskfont/diskfonttag.h b/diskfont/diskfonttag.h
+--- a/diskfont/diskfonttag.h	2026-11-03 02:04:25.720747057 +0000
++++ b/diskfont/diskfonttag.h	2026-11-03 05:53:31.936534861 +0000
+@@ -115,5 +115,44 @@
+ 
+ #define  OT_MAXAVAILSIZES	20
+ 
++/* Outline engine tags added for diskfont V47 */
++#define  OTUL_DoubleBroken      4
++#define  OT_MemPtr              (OT_Level0 | OT_Indirect | 0x16)
++#define  OT_MemSize             (OT_Level0 | 0x17)
++#define  OT_GlyphCode_32        (OT_Level0 | 0x18)
++#define  OT_GlyphCode2_32       (OT_Level0 | 0x19)
++#define  OT_GlyphMap8Bit        (OT_Level0 | OT_Indirect | 0x1a)
++#define  OT_WidthList32         (OT_Level0 | OT_Indirect | 0x1b)
++#define  OT_BaseLine            (OT_Level0 | OT_Indirect | 0x1c)
++#define  OT_NumGlyphs           (OT_Level0 | OT_Indirect | 0x1d)
++#define  OT_NumKernPairs        (OT_Level0 | OT_Indirect | 0x1e)
++#define  OT_HasGlyphs           (OT_Level0 | OT_Indirect | 0x1f)
++#define  OT_GlyphName           (OT_Level0 | OT_Indirect | 0x26)
++#define  OT_BMSize              (OT_Level2 | 0x21)
++#define  OT_IsUnderlined        (OT_Level2 | 0x23)
++#define  OT_RName               (OT_Level2 | OT_Indirect | 0x09)
++
++/* SetDiskFontCtrlA() tags */
++#define  DFCTRL_BASE            (TAG_USER | 0x0B000000)
++#define  DFCTRL_XDPI            (DFCTRL_BASE + 1)
++#define  DFCTRL_YDPI            (DFCTRL_BASE + 2)
++#define  DFCTRL_XDOTP           (DFCTRL_BASE + 3)
++#define  DFCTRL_YDOTP           (DFCTRL_BASE + 4)
++#define  DFCTRL_CACHE           (DFCTRL_BASE + 5)
++#define  DFCTRL_SORTMODE        (DFCTRL_BASE + 6)
++#define  DFCTRL_CACHEFLUSH      (DFCTRL_BASE + 7)
++#define  DFCTRL_CHARSET         (DFCTRL_BASE + 8)
++
++#define  DFCTRL_SORT_OFF        0
++#define  DFCTRL_SORT_ASC        1
++#define  DFCTRL_SORT_DES        (-1)
++
++/* Character set query tags */
++#define  DFCS_NUMBER            (DFCTRL_BASE + 0)
++#define  DFCS_NEXTNUMBER        (DFCTRL_BASE + 1)
++#define  DFCS_NAME              (DFCTRL_BASE + 2)
++#define  DFCS_MIMENAME          (DFCTRL_BASE + 3)
++#define  DFCS_MAPTABLE          (DFCTRL_BASE + 4)
++
+ #endif /* DISKFONT_DISKFONTTAG_H */
+ 
+diff -ruN a/diskfont/glyph.h b/diskfont/glyph.h
+--- a/diskfont/glyph.h	2026-11-03 02:04:25.720774493 +0000
++++ b/diskfont/glyph.h	2026-11-03 05:40:00.543050557 +0000
+@@ -79,5 +79,15 @@
+     FIXED   	    gwe_Width;
+ };
+ 
++
++/* OT_WidthList32 entries (V47) */
++struct GlyphWidthEntry32
++{
++    struct MinNode gwe32_Node;
++    UWORD          gwe32_reserved;
++    FIXED          gwe32_Width;             /* advance, fraction of the em */
++    ULONG          gwe32_Code;              /* character code */
++};
++
+ #endif /* DISKFONT_GLYPH_H */
+ 
+diff -ruN a/dos/dos.h b/dos/dos.h
+--- a/dos/dos.h	2026-11-03 02:04:25.720333807 +0000
++++ b/dos/dos.h	2026-11-03 05:59:16.556727987 +0000
+@@ -91,7 +91,7 @@
+     UBYTE	     fib_Reserved[32]; /* PRIVATE */
+ };
+ 
+-struct FileInfoBlock32
++struct FileInfoBlock
+ {
+     IPTR	     fib_DiskKey;
+       /* See <dos/dosextens.h> for definitions. Generally: if this is >= 0
+@@ -119,11 +119,6 @@
+     UBYTE	     fib_Reserved[32]; /* PRIVATE */
+ };
+ 
+-#if (__DOS64)
+-#define FileInfoBlock FileInfoBlock64
+-#else
+-#define FileInfoBlock FileInfoBlock32
+-#endif
+ 
+ /* Protection bits for files (fib_Protection). */
+ /* Flags for owner (they are active-low, i.e. not set means the action is
+@@ -186,7 +181,7 @@
+     IPTR id_InUse;         /* Set, if device is in use. */
+ };
+ 
+-struct InfoData32
++struct InfoData
+ {
+     LONG id_NumSoftErrors; /* Number of soft errors on device. */
+     LONG id_UnitNumber;    /* Unit number of device. */
+@@ -199,11 +194,6 @@
+     IPTR id_InUse;         /* Set, if device is in use. */
+ };
+ 
+-#if (__DOS64)
+-#define InfoData InfoData64 
+-#else
+-#define InfoData InfoData32
+-#endif
+ 
+ /* id_DiskState */
+ #define ID_WRITE_PROTECTED 80 /* Volume is write-protected. */
+@@ -462,4 +452,20 @@
+ #define DOS_CLI          4 /* struct CommandLineInterface <dos/dosextens.h> */
+ #define DOS_RDARGS       5 /* struct RDArgs <dos/rdargs.h> */
+ 
++/* Handy sizes */
++#define BITSPERBYTE     8
++#define BYTESPERLONG    4
++#define BITSPERLONG     32
++
++/* Old spelling of OFFSET_BEGINNING */
++#define OFFSET_BEGINING OFFSET_BEGINNING
++
++/* SameLock() result: different objects on the same volume */
++#define LOCK_SAME_HANDLER 1
++
++/* Disk types for long file names (V47) */
++#define ID_LONG_DOS_DISK     (0x444F5306L)   /* 'DOS\6' */
++#define ID_LONG_FFS_DISK     (0x444F5307L)   /* 'DOS\7' */
++#define ID_COMPLONG_FFS_DISK (0x444F5308L)   /* 'DOS\8' */
++
+ #endif /* DOS_DOS_H */
+diff -ruN a/dos/dosextens.h b/dos/dosextens.h
+--- a/dos/dosextens.h	2026-11-03 02:04:25.719904240 +0000
++++ b/dos/dosextens.h	2026-11-03 06:00:36.072987907 +0000
+@@ -100,6 +100,14 @@
+     struct SignalSemaphore rn_RootLock;
+ };
+ 
++/* A block of the CLI process table (rn_CliList) */
++struct CliProcList
++{
++    struct MinNode   cpl_Node;
++    LONG             cpl_First;   /* CLI number of the first entry */
++    struct MsgPort **cpl_Array;   /* [0]: number of entries, [1..]: process ports */
++};
++
+ 
+ /* Structure that is linked into the rootnode's rn_CliList. Completely
+    private, of course! ... and it's not compatible to AmigaOS. */
+@@ -312,38 +320,24 @@
+     BPTR  fh_OrigBuf;	/* Always the same as fh_Buf */
+ };
+ 
+-struct FileHandle32
++struct FileHandle
+ {
+-    /* The next three are used with packet-based filesystems */
+-    ULONG  fh_Flags;
+-    LONG   fh_Interactive;	/* interactive handle flag */
+-    struct MsgPort * fh_Type;   /* port to send packets to */
+-
+-    BPTR    fh_Buf;
+-    LONG    fh_Pos;
+-    LONG    fh_End;
+-
+-    SIPTR fh_Funcs;
+-    SIPTR fh_Func2;
+-    SIPTR fh_Func3;
+-    SIPTR fh_Args;
+-    SIPTR fh_Arg2;
+-
+-    /* v39+ */
+-    ULONG fh_BufSize;	/* Size of buffered io buffer */
+-    BPTR  fh_OrigBuf;	/* Always the same as fh_Buf */
++    struct Message * fh_Link;     /* private */
++    struct MsgPort * fh_Port;     /* despite the type: non-zero if interactive */
++    struct MsgPort * fh_Type;     /* handler port, NULL for NIL: */
++    BPTR             fh_Buf;      /* buffer, if any */
++    LONG             fh_Pos;
++    LONG             fh_End;
++    LONG             fh_Funcs;
++#define fh_Func1 fh_Funcs
++    LONG             fh_Func2;
++    LONG             fh_Func3;
++    LONG             fh_Args;
++#define fh_Arg1 fh_Args
++    LONG             fh_Arg2;
+ };
+ 
+-#if (__DOS64)
+-#define FileHandle FileHandle64 
+-#else
+-#define FileHandle FileHandle32
+-#endif
+ 
+-/* Original AmigaOS aliases */
+-#define fh_Port fh_Interactive
+-#define fh_Func1 fh_Funcs
+-#define fh_Arg1 fh_Args
+ 
+ /* Structure of a lock. This is provided as it may be required internally by
+  * packet-based filesystems.
+@@ -669,4 +663,9 @@
+ #define ABORT_BUSY       288
+ #define ABORT_DISK_ERROR 296
+ 
++#define ACTION_UNDISK_INFO  513    /* ACTION_DISK_INFO for dismounted volumes */
++#define DLT_PRIVATE         (-1)
++#define RNB_PRIVATE1        1
++#define RNF_PRIVATE1        (1<<RNB_PRIVATE1)
++
+ #endif /* DOS_DOSEXTENS_H */
+diff -ruN a/dos/doshunks.h b/dos/doshunks.h
+--- a/dos/doshunks.h	2026-11-03 02:04:25.719984068 +0000
++++ b/dos/doshunks.h	2026-11-03 06:00:36.089923629 +0000
+@@ -99,4 +99,6 @@
+     struct HunkRelocGroup *hrt_Group;
+ };
+ 
++#define EXT_RES         3       /* resident library */
++
+ #endif /* DOS_DOSHUNKS_H */
+diff -ruN a/dos/dostags.h b/dos/dostags.h
+--- a/dos/dostags.h	2026-11-03 02:04:25.719748034 +0000
++++ b/dos/dostags.h	2026-11-03 06:00:36.105430362 +0000
+@@ -128,6 +128,7 @@
+      current process. */
+ #define SYS_Error	(SYS_Dummy + 6)
+ 
++#ifdef __AROS__
+  /* The following are AROS-specific */
+ 
+  /* (BPTR/struct FileHandle *) This is the FileHandle from which the shell will try to read
+@@ -154,6 +155,8 @@
+    * CLI_NEWCLI     ---         FALSE
+    */
+ #define SYS_CliType     (SYS_Dummy + 14)
++#endif /* __AROS__: these numbers are used by AmigaOS for the tags below */
++
+ 
+ /* This is a *TAG VALUE*, not a tag. Use this together with SYS_Input, SYS_Output and
+    SYS_Error, to tell SystemTagList to *duplicate* the respective caller's streams.
+@@ -202,4 +205,11 @@
+   /* Length of buffer for CLI prompt. */
+ #define ADO_PromptLen	(ADO_Dummy + 5)
+ 
++/* More SystemTagList() tags (V47) */
++#define SYS_ExecuteInputStream  (SYS_Dummy + 7)
++#define SYS_CmdStream           (SYS_Dummy + 8)
++#define SYS_InName              (SYS_Dummy + 9)
++#define SYS_OutName             (SYS_Dummy + 10)
++#define SYS_CmdName             (SYS_Dummy + 11)
++
+ #endif /* DOS_DOSTAGS_H */
+diff -ruN a/dos/exall.h b/dos/exall.h
+--- a/dos/exall.h	2026-11-03 02:04:25.719880099 +0000
++++ b/dos/exall.h	2026-11-03 02:10:30.871935803 +0000
+@@ -43,9 +43,9 @@
+     UWORD ed_OwnerGID; /* The group-owner ID. */
+ };
+ 
+-struct ExAllData32
++struct ExAllData
+ {
+-    struct ExAllData32 * ed_Next;
++    struct ExAllData * ed_Next;
+ 
+     UBYTE * ed_Name;     /* Name of the file. */
+     LONG    ed_Type;     /* Type of file. See <dos/dosextens.h>. */
+@@ -65,11 +65,6 @@
+     UWORD ed_OwnerGID; /* The group-owner ID. */
+ };
+ 
+-#if (__DOS64)
+-#define ExAllData ExAllData64
+-#else
+-#define ExAllData ExAllData32
+-#endif
+ 
+ /* Type argument for ExAll(). Each number includes the information of all
+    lower numbers, too. If you specify for example ED_SIZE, you will get
+diff -ruN a/dos/filehandler.h b/dos/filehandler.h
+--- a/dos/filehandler.h	2026-11-03 02:04:25.720432618 +0000
++++ b/dos/filehandler.h	2026-11-03 06:00:36.121416600 +0000
+@@ -119,4 +119,13 @@
+     BSTR   dn_Name;
+ };
+ 
++/* Old names of de_SecOrg and de_SectorPerBlock */
++#define DE_SECORG       2
++#define DE_SECSPERBLK   4
++
++/* de_Interleave high bits: file system options (V47) */
++#define ENVF_SCSIDIRECT     (1L<<16)
++#define ENVF_SUPERFLOPPY    (1L<<17)
++#define ENVF_DISABLENSD     (1L<<18)
++
+ #endif /* DOS_FILEHANDLER_H */
+diff -ruN a/dos/record.h b/dos/record.h
+--- a/dos/record.h	2026-11-03 02:04:25.720467514 +0000
++++ b/dos/record.h	2026-11-03 02:10:30.879401235 +0000
+@@ -33,7 +33,7 @@
+     ULONG rec_Mode;   /* The mode od locking (see above). */
+ };
+ 
+-struct RecordLock32
++struct RecordLock
+ {
+     BPTR  rec_FH;     /* (struct FileHandle *) The file to get the current
+                          record from. */
+@@ -42,10 +42,5 @@
+     ULONG rec_Mode;   /* The mode od locking (see above). */
+ };
+ 
+-#if (__DOS64)
+-#define RecordLock RecordLock64 
+-#else
+-#define RecordLock RecordLock32
+-#endif
+ 
+ #endif /* DOS_RECORD_H */
+diff -ruN a/exec/alerts.h b/exec/alerts.h
+--- a/exec/alerts.h	2026-11-03 02:04:25.718177238 +0000
++++ b/exec/alerts.h	2026-11-03 06:01:34.224334134 +0000
+@@ -125,7 +125,7 @@
+ #define AN_GfxNoMemMspc 0x82010001
+ #define AN_LongFrame    0x82010006
+ #define AN_ShortFrame   0x82010007
+-#define AN_TextTmpRas   0x82010009
++#define AN_TextTmpRas   0x02010009
+ #define AN_BltBitMap    0x8201000A
+ #define AN_RegionMemory 0x8201000B
+ #define AN_MakeVPort    0x82010030
+@@ -241,4 +241,10 @@
+ #define AN_Hidd		    0x42000000
+ #define AN_HiddNoRoot	    0xC2000001	/* Could not create root device */
+ 
++/* More alert numbers */
++#define AN_AVLNotImpl   0x01000011  /* AVL tree functions missing */
++#define AN_TreeNotImpl  0x01000012  /* ... */
++#define AN_DeadIntui    0x04000012  /* Intuition can't go on */
++#define AN_CLIObsolete  0x0700000F  /* old CLI call */
++
+ #endif /* EXEC_ALERTS_H */
+diff -ruN a/exec/execbase.h b/exec/execbase.h
+--- a/exec/execbase.h	2026-11-03 02:04:25.718288956 +0000
++++ b/exec/execbase.h	2026-11-03 06:00:36.136838221 +0000
+@@ -218,4 +218,7 @@
+ #define RESLIST_NEXT (IPTR)0x00000001
+ #endif
+ 
++#define AFB_FPGA        10      /* FPGA based CPU core */
++#define AFF_FPGA        (1<<AFB_FPGA)
++
+ #endif /* EXEC_EXECBASE_H */
+diff -ruN a/exec/ports.h b/exec/ports.h
+--- a/exec/ports.h	2026-11-03 02:04:25.717768918 +0000
++++ b/exec/ports.h	2026-11-03 06:01:08.982464743 +0000
+@@ -1,6 +1,9 @@
+ #ifndef EXEC_PORTS_H
+ #define EXEC_PORTS_H
+ 
++/* included by the AmigaOS header too */
++#include <exec/tasks.h>
++
+ /*
+     Copyright © 1995-2017, The AROS Development Team. All rights reserved.
+     $Id$
+@@ -41,7 +44,7 @@
+ #define mp_SoftInt mp_SigTask	/* Alias */
+ 
+ /* mp_Flags: Port arrival actions (PutMsg) */
+-#define PF_ACTION	7	/* Mask */
++#define PF_ACTION	3	/* Mask for the PA_ values below */
+ 
+ #define PA_SIGNAL	0	/* Signal task in mp_SigTask */
+ #define PA_SOFTINT	1	/* Signal SoftInt in mp_SoftInt/mp_SigTask */
+diff -ruN a/exec/semaphores.h b/exec/semaphores.h
+--- a/exec/semaphores.h	2026-11-03 02:04:25.718151218 +0000
++++ b/exec/semaphores.h	2026-11-03 06:01:53.906307190 +0000
+@@ -67,4 +67,13 @@
+ #define SM_EXCLUSIVE (0L)
+ #define SM_SHARED    (1L)
+ 
++/* The old message-based semaphore (Procure()/Vacate()) */
++struct Semaphore
++{
++    struct MsgPort sm_MsgPort;
++    WORD           sm_Bids;
++};
++
++#define sm_LockMsg  mp_SigTask
++
+ #endif /* EXEC_SEMAPHORES_H */
+diff -ruN a/exec/tasks.h b/exec/tasks.h
+--- a/exec/tasks.h	2026-11-03 02:04:25.718253337 +0000
++++ b/exec/tasks.h	2026-11-03 05:40:55.803861429 +0000
+@@ -17,9 +17,6 @@
+ #ifndef EXEC_LISTS_H
+ #   include <exec/lists.h>
+ #endif
+-#ifndef EXEC_PORTS_H
+-#   include <exec/ports.h>
+-#endif
+ #ifndef UTILITY_TAGITEM_H
+ #   include <utility/tagitem.h>
+ #endif
+@@ -41,15 +38,8 @@
+     ULONG           tc_SigWait;                             /* Signals we are waiting for */
+     ULONG           tc_SigRecvd;                            /* Received signals */
+     ULONG           tc_SigExcept;                           /* Signals we will take exceptions for */
+-    union
+-    {
+-        struct
+-        {
+-            UWORD   tc_ETrapAlloc;                          /* Allocated traps */
+-            UWORD   tc_ETrapAble;                           /* Enabled traps */
+-        }           tc_ETrap;
+-        struct ETask *tc_ETask;                             /* Valid if TF_ETASK is set */
+-    }               tc_UnionETask;
++    UWORD           tc_TrapAlloc;                           /* Allocated traps */
++    UWORD           tc_TrapAble;                            /* Enabled traps */
+     APTR            tc_ExceptData;                          /* Exception data */
+     APTR            tc_ExceptCode;                          /* Exception code */
+     APTR            tc_TrapData;                            /* Trap data */
+@@ -70,29 +60,6 @@
+ #endif
+ };
+ 
+-#define tc_TrapAlloc                tc_UnionETask.tc_ETrap.tc_ETrapAlloc
+-#define tc_TrapAble                 tc_UnionETask.tc_ETrap.tc_ETrapAble
+-
+-/* Macros */
+-#define GetTrapAlloc(t) \
+-	({struct Task *_t = (struct Task *)t;\
+-	  (_t->tc_Flags & TF_ETASK) ? _t->tc_UnionETask.tc_ETask->et_TrapAlloc : \
+-	  _t->tc_UnionETask.tc_ETrap.tc_ETrapAlloc; \
+-	 })
+-#define GetTrapAble(t) \
+-	({struct Task *_t = (struct Task *)t;\
+-	  (_t->tc_Flags & TF_ETASK) ? _t->tc_UnionETask.tc_ETask->et_TrapAble : \
+-	  _t->tc_UnionETask.tc_ETrap.tc_ETrapAble;\
+-	 })
+-#define GetETask(t) \
+-	({struct Task *_t = (struct Task *)t;\
+-	   (_t->tc_Flags & TF_ETASK) ? _t->tc_UnionETask.tc_ETask : NULL; \
+-         })
+-#define GetETaskID(t) \
+-	({struct Task *_t = (struct Task *)t;\
+-	  (_t->tc_Flags & TF_ETASK) ? _t->tc_UnionETask.tc_ETask->et_UniqueID: 0UL; \
+-         })
+-
+ 
+ /* Stack swap structure as passed to StackSwap() */
+ struct StackSwapStruct
+@@ -151,49 +118,6 @@
+ #define SIGF_NET                    (1L<<7)
+ #define SIGF_DOS                    (1L<<8)
+ 
+-/* Define this when compiling MorphOS-compatible source */
+-#ifdef AROS_MORPHOS_COMPATIBLE
+-
+-#define tc_ETask tc_UnionETask.tc_ETask
+-
+-struct ETask
+-{
+-    struct Message  Message;
+-    struct Task *Parent;                                /* Pointer to task */
+-    ULONG       UniqueID;
+-    struct MinList  Children;                           /* List of children */
+-    UWORD       TrapAlloc;
+-    UWORD       TrapAble;
+-    ULONG       Result1;                                /* First result */
+-    APTR        Result2;                                /* Result data pointer (AllocVec) */
+-    struct MsgPort  MsgPort;
+-    void        *MemPool;
+-    void        *Reserved[2];
+-    void        *RegFrame;
+-
+-    /* Internal fields follow */
+-};
+-
+-#else
+-/* Extended Task structure */
+-struct ETask
+-{
+-    struct Message  et_Message;
+-    APTR            et_Parent;                          /* Pointer to parent task                       */
+-    ULONG           et_UniqueID;
+-    struct MinList  et_Children;                        /* List of children                             */
+-    UWORD           et_TrapAlloc;
+-    UWORD           et_TrapAble;
+-    ULONG           et_Result1;                         /* First result                                 */
+-    APTR            et_Result2;                         /* Result data pointer (AllocVec)               */
+-    struct MsgPort  et_TaskMsgPort;
+-    void            *et_MemPool;                        /* Task's private memory pool                   */
+-    void            *et_Reserved[2];                    /* MorphOS Private                              */
+-    void            *et_RegFrame;
+-    /* Internal fields follow */
+-};
+-#endif
+-
+ /* Return codes from new child functions */
+ #define CHILD_NOTNEW                    1               /* Function not called from a new style task    */
+ #define CHILD_NOTFOUND                  2               /* Child not found                              */
+diff -ruN a/exec/types.h b/exec/types.h
+--- a/exec/types.h	2026-11-03 02:04:25.717897903 +0000
++++ b/exec/types.h	2026-11-03 02:05:36.682774038 +0000
+@@ -17,6 +17,11 @@
+ #   include <aros/system.h>
+ #endif
+ 
++/* amiga-sdk: as with NDK 3.2, a C99 compiler gets <stdint.h> too. */
++#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
++#   include <stdint.h>
++#endif
++
+ /*************************************
+  ***** Basic Data types          *****
+  *************************************/
+@@ -280,14 +285,26 @@
+ #endif
+ 
+ /*
+-    Minimum support library version. AROS doesn't have system libraries
+-    below V40
++    Minimum support library version (Kickstart 1.2).
+ */
+-#define LIBRARY_MINIMUM                         40
++#define LIBRARY_MINIMUM                         33
+ 
+ /*
+-    The current version of the includes. Do not use this value in calls
+-    to OpenLibrary(). Some system libraries may not be at this version. */
+-#define INCLUDE_VERSION                         40
++    The current version of the includes (amiga-sdk: the AmigaOS 3.2 API).
++    Do not use this value in calls to OpenLibrary(). Some system libraries
++    may not be at this version. */
++#define INCLUDE_VERSION                         47
++
++/* amiga-sdk: types and macros of older AmigaOS includes. */
++#define BYTEMASK                                0xFF
++#ifndef __typedef_SHORT
++#   define __typedef_SHORT
++    typedef short                               SHORT;
++    typedef unsigned short                      USHORT;
++    typedef short                               COUNT;
++    typedef unsigned short                      UCOUNT;
++    typedef ULONG                               CPTR;
++    typedef unsigned short                      RPTR;
++#endif
+ 
+ #endif /* exec/types.h */
+diff -ruN a/gadgets/button.h b/gadgets/button.h
+--- a/gadgets/button.h	2026-11-03 02:04:25.721067301 +0000
++++ b/gadgets/button.h	2026-11-03 05:57:10.211253900 +0000
+@@ -45,7 +45,7 @@
+ #define BUTTON_DomainString     (BUTTON_Dummy+20)   /* (STRPTR) String for domain calculation */
+ #define BUTTON_Integer          (BUTTON_Dummy+21)   /* (int) Numeric value to display */
+ #define BUTTON_BitMap           (BUTTON_Dummy+22)   /* (struct BitMap *) BitMap to render */
+-#define BUTTON_TextPadding      (BUTTON_Dummy+23)   /* (BOOL) Pad text with extra spacing */
++#define BUTTON_TextPadding      (BUTTON_Dummy+40)   /* (BOOL) Pad text with extra spacing */
+ 
+ #define BUTTON_AnimButton       (BUTTON_Dummy+50)   /* (BOOL) Enable animation mode */
+ #define BUTTON_AnimImages       (BUTTON_Dummy+51)   /* (struct Image *) Animation image array */
+@@ -87,4 +87,21 @@
+ #endif
+ #define StartButton     ButtonObject
+ 
++/* Button V45-V47 additions */
++#define BUTTON_Array            (BUTTON_Dummy+3)    /* (APTR) array of labels or images */
++#define BUTTON_Current          (BUTTON_Dummy+9)    /* (LONG) index into BUTTON_Array */
++#define BUTTON_EraseBackground  (BUTTON_Dummy+57)   /* (BOOL) clear before rendering */
++#define BUTTON_HorizAlignment   (BUTTON_Dummy+58)   /* (ULONG) BALIGN_LEFT/CENTER/RIGHT */
++#define BUTTON_VertAlignment    (BUTTON_Dummy+59)   /* (ULONG) BALIGN_TOP/CENTER/BOTTOM */
++
++#define BAG_POPDATE     13  /* Popup date glyph */
++#define BAG_POPCOLOR    14  /* Popup colour glyph */
++#define BAG_POPCOLOUR   BAG_POPCOLOR
++
++#define BALIGN_LEFT     0
++#define BALIGN_TOP      0
++#define BALIGN_CENTER   1
++#define BALIGN_RIGHT    2
++#define BALIGN_BOTTOM   2
++
+ #endif /* GADGETS_BUTTON_H */
+diff -ruN a/gadgets/checkbox.h b/gadgets/checkbox.h
+--- a/gadgets/checkbox.h	2026-11-03 02:04:25.721357257 +0000
++++ b/gadgets/checkbox.h	2026-11-03 06:00:35.812250641 +0000
+@@ -40,4 +40,6 @@
+ #define CheckBoxEnd     TAG_END)
+ #endif
+ 
++#define CHECKBOX_Invert         (CHECKBOX_Dummy + 6)  /* (BOOL) Mark is drawn when not checked */
++
+ #endif /* GADGETS_CHECKBOX_H */
+diff -ruN a/gadgets/chooser.h b/gadgets/chooser.h
+--- a/gadgets/chooser.h	2026-11-03 02:04:25.721428035 +0000
++++ b/gadgets/chooser.h	2026-11-03 06:00:35.827983804 +0000
+@@ -71,4 +71,10 @@
+ #define ChooserEnd      TAG_END)
+ #endif
+ 
++/* chooser.gadget V47 additions */
++#define CNA_CopyText        (CNA_Dummy+10)  /* (BOOL) Keep a copy of CNA_Text */
++#define CHOOSER_ImageJustification (CHOOSER_Dummy+14) /* (WORD) Alignment of label images */
++#define CHOOSER_SelectedNode (CHOOSER_Dummy+15) /* (struct Node *) Active entry as a node */
++#define CHOOSER_DeactivateOnMostRawKeys (CHOOSER_Dummy+16) /* (BOOL) Close the menu on key presses */
++
+ #endif /* GADGETS_CHOOSER_H */
+diff -ruN a/gadgets/clicktab.h b/gadgets/clicktab.h
+--- a/gadgets/clicktab.h	2026-11-03 02:04:25.720951808 +0000
++++ b/gadgets/clicktab.h	2026-11-03 05:59:47.831877913 +0000
+@@ -7,6 +7,9 @@
+ #ifndef GADGETS_CLICKTAB_H
+ #define GADGETS_CLICKTAB_H
+ 
++/* included by the AmigaOS header too */
++#include <intuition/gadgetclass.h>
++
+ #ifndef EXEC_TYPES_H
+ #include <exec/types.h>
+ #endif
+@@ -32,9 +35,11 @@
+ #define TNA_Number          (TNA_Dummy + 8)  /* (WORD) Numeric tab ID */
+ #define TNA_TextPen         (TNA_Dummy + 9)  /* (WORD) Pen for tab text */
+ #define TNA_Disabled        (TNA_Dummy + 10) /* (BOOL) Tab disabled state (V42) */
+-#define TNA_CloseGadget     (TNA_Dummy + 11) /* (BOOL) Show a close gadget on this tab */
+-#define TNA_HintInfo        (TNA_Dummy + 12) /* (STRPTR) Bubble help text for this tab */
+-#define TNA_HelpText        TNA_HintInfo     /* AmigaOS 3.2 name for TNA_HintInfo */
++#define TNA_Flagged         (TNA_Dummy + 11) /* (BOOL) Draw the CLICKTAB_FlagImage on this tab */
++#define TNA_CloseGadget     (TNA_Dummy + 13) /* (BOOL) Show a close gadget on this tab */
++#define TNA_SoftStyle       (TNA_Dummy + 14) /* (UBYTE) Font style of the label */
++#define TNA_HelpText        (TNA_Dummy + 15) /* (STRPTR) Bubble help text for this tab */
++#define TNA_HintInfo        (TNA_Dummy + 12) /* (STRPTR) Help bubble text (V45) */
+ 
+ /* ClickTab gadget attributes */
+ #define CLICKTAB_Dummy              (REACTION_Dummy + 0x27000)
+@@ -44,13 +49,25 @@
+ #define CLICKTAB_Orientation        (CLICKTAB_Dummy + 4) /* (WORD) Layout orientation */
+ #define CLICKTAB_PageGroup          (CLICKTAB_Dummy + 5) /* (Object *) Embedded page object (V42) */
+ #define CLICKTAB_PageGroupBackFill  (CLICKTAB_Dummy + 6) /* (Object *) Page + backfill ptr (V42) */
+-#define CLICKTAB_MinorLabelChange   (CLICKTAB_Dummy + 7) /* (BOOL) Set: label texts changed but layout kept */
+-#define CLICKTAB_NodeClosed         (CLICKTAB_Dummy + 8) /* (struct Node *) Get: tab whose close gadget was used */
+-#define CLICKTAB_LabelTruncate      (CLICKTAB_Dummy + 9) /* (BOOL) Truncate labels that don't fit */
+-#define CLICKTAB_CloseImage         (CLICKTAB_Dummy + 10) /* (Object *) Image for tab close gadgets */
+-#define CLICKTAB_FlagImage          (CLICKTAB_Dummy + 11) /* (Object *) Image for flagged tabs */
++#define CLICKTAB_LabelTruncate      (CLICKTAB_Dummy + 7)  /* (BOOL) Truncate labels that don't fit */
++#define CLICKTAB_FlagImage          (CLICKTAB_Dummy + 8)  /* (Object *) Image for flagged tabs */
++#define CLICKTAB_EvenSize           (CLICKTAB_Dummy + 9)  /* (BOOL) Make all tabs equally wide */
++#define CLICKTAB_Total              (CLICKTAB_Dummy + 10) /* (LONG) Number of tabs (get) */
++#define CLICKTAB_PageGroupBorder    (CLICKTAB_Dummy + 11) /* (BOOL) Frame around the page group */
++#define CLICKTAB_PageBorder         CLICKTAB_PageGroupBorder
+ #define CLICKTAB_AutoFit            (CLICKTAB_Dummy + 12) /* (BOOL) Auto fit tabs to gadget width */
+-#define CLICKTAB_EvenSize           (CLICKTAB_Dummy + 13) /* (BOOL) Make all tabs equally wide */
++#define CLICKTAB_AutoTabNumbering   (CLICKTAB_Dummy + 13) /* (BOOL) Number the tabs by position */
++#define CLICKTAB_CloseImage         (CLICKTAB_Dummy + 14) /* (Object *) Image for tab close gadgets */
++#define CLICKTAB_Closed             (CLICKTAB_Dummy + 15) /* (LONG) Get: tab whose close gadget was used */
++#define CLICKTAB_NodeClosed         (CLICKTAB_Dummy + 16) /* (struct Node *) Get: ... as a node */
++#define CLICKTAB_ClosePlacement     (CLICKTAB_Dummy + 17) /* (ULONG) PLACECLOSE_* */
++#define CLICKTAB_ChooserFlagImage   (CLICKTAB_Dummy + 18) /* (Object *) Flag image in the overflow menu */
++#define CLICKTAB_MinorLabelChange   (CLICKTAB_Dummy + 19) /* (BOOL) Set: label texts changed but layout kept */
++#define CLICKTAB_TabsOffsetAsLayoutSpacing (CLICKTAB_Dummy + 20) /* (BOOL) Indent tabs like layout spacing */
++
++/* CLICKTAB_ClosePlacement */
++#define PLACECLOSE_LEFT     0
++#define PLACECLOSE_RIGHT    1
+ 
+ /* CLICKTAB_Orientation modes */
+ #define CTORIENT_HORIZ      0
+diff -ruN a/gadgets/colorwheel.h b/gadgets/colorwheel.h
+--- a/gadgets/colorwheel.h	2026-11-03 02:04:25.721380250 +0000
++++ b/gadgets/colorwheel.h	2026-11-03 06:00:35.843092204 +0000
+@@ -53,4 +53,6 @@
+ #define WHEEL_MaxPens        (WHEEL_Dummy + 14)
+ 
+ 
++#define WHEEL_KeepAspect     (WHEEL_Dummy + 15)  /* (BOOL) keep the wheel round */
++
+ #endif /* GADGETS_COLORWHEEL_H */
+diff -ruN a/gadgets/fuelgauge.h b/gadgets/fuelgauge.h
+--- a/gadgets/fuelgauge.h	2026-11-03 02:04:25.721557595 +0000
++++ b/gadgets/fuelgauge.h	2026-11-03 05:40:01.129647338 +0000
+@@ -7,6 +7,9 @@
+ #ifndef GADGETS_FUELGAUGE_H
+ #define GADGETS_FUELGAUGE_H
+ 
++/* included by the AmigaOS header too */
++#include <intuition/gadgetclass.h>
++
+ #ifndef EXEC_TYPES_H
+ #include <exec/types.h>
+ #endif
+diff -ruN a/gadgets/getfile.h b/gadgets/getfile.h
+--- a/gadgets/getfile.h	2026-11-03 02:04:25.721656993 +0000
++++ b/gadgets/getfile.h	2026-11-03 06:00:35.858270944 +0000
+@@ -7,6 +7,9 @@
+ #ifndef GADGETS_GETFILE_H
+ #define GADGETS_GETFILE_H
+ 
++/* included by the AmigaOS header too */
++#include <intuition/gadgetclass.h>
++
+ #ifndef EXEC_TYPES_H
+ #include <exec/types.h>
+ #endif
+@@ -72,4 +75,9 @@
+ #define GetFileEnd      TAG_END)
+ #endif
+ 
++/* getfile.gadget V47 additions */
++#define GETFILE_AllowEmptyFileSelection (GETFILE_Dummy + 24) /* (BOOL) OK without a file name */
++#define GETFILE_FilterHook          (GETFILE_Dummy + 25) /* (struct Hook *) ASLFR_FilterFunc */
++#define GETFILE_InitialShowVolumes  (GETFILE_Dummy + 26) /* (BOOL) Start with the volume list */
++
+ #endif /* GADGETS_GETFILE_H */
+diff -ruN a/gadgets/getfont.h b/gadgets/getfont.h
+--- a/gadgets/getfont.h	2026-11-03 02:04:25.721044862 +0000
++++ b/gadgets/getfont.h	2026-11-03 05:57:51.259516833 +0000
+@@ -7,6 +7,9 @@
+ #ifndef GADGETS_GETFONT_H
+ #define GADGETS_GETFONT_H
+ 
++/* included by the AmigaOS header too */
++#include <intuition/gadgetclass.h>
++
+ #ifndef EXEC_TYPES_H
+ #include <exec/types.h>
+ #endif
+@@ -60,4 +63,18 @@
+ #define GetFontEnd      TAG_END)
+ #endif
+ 
++/* getfont.gadget V47 additions (ASL font requester options) */
++#define GETFONT_SampleText          (GETFONT_Dummy + 23)
++#define GETFONT_DoCharSet           (GETFONT_Dummy + 24)
++#define GETFONT_CharSet             (GETFONT_Dummy + 25)
++#define GETFONT_OTagOnly            (GETFONT_Dummy + 26)
++#define GETFONT_ScalableOnly        (GETFONT_Dummy + 27)
++#define GETFONT_DoSpecialMode       (GETFONT_Dummy + 28)
++#define GETFONT_SpecialMode         (GETFONT_Dummy + 29)
++#define GETFONT_FilterFunc          (GETFONT_Dummy + 30)
++#define GETFONT_CSFilterFunc        (GETFONT_Dummy + 31)
++#define GETFONT_SpecialModeBitMap   (GETFONT_Dummy + 32)
++#define GETFONT_SpecialModeBitMapWidth  (GETFONT_Dummy + 33)
++#define GETFONT_SpecialModeBitMapHeight (GETFONT_Dummy + 34)
++
+ #endif /* GADGETS_GETFONT_H */
+diff -ruN a/gadgets/getscreenmode.h b/gadgets/getscreenmode.h
+--- a/gadgets/getscreenmode.h	2026-11-03 02:04:25.720999213 +0000
++++ b/gadgets/getscreenmode.h	2026-11-03 05:40:01.131094223 +0000
+@@ -7,6 +7,9 @@
+ #ifndef GADGETS_GETSCREENMODE_H
+ #define GADGETS_GETSCREENMODE_H
+ 
++/* included by the AmigaOS header too */
++#include <intuition/gadgetclass.h>
++
+ #ifndef EXEC_TYPES_H
+ #include <exec/types.h>
+ #endif
+diff -ruN a/gadgets/integer.h b/gadgets/integer.h
+--- a/gadgets/integer.h	2026-11-03 02:04:25.721476318 +0000
++++ b/gadgets/integer.h	2026-11-03 05:40:01.131898884 +0000
+@@ -7,6 +7,9 @@
+ #ifndef GADGETS_INTEGER_H
+ #define GADGETS_INTEGER_H
+ 
++/* included by the AmigaOS header too */
++#include <intuition/gadgetclass.h>
++
+ #ifndef EXEC_TYPES_H
+ #include <exec/types.h>
+ #endif
+diff -ruN a/gadgets/layout.h b/gadgets/layout.h
+--- a/gadgets/layout.h	2026-11-03 02:04:25.720914018 +0000
++++ b/gadgets/layout.h	2026-11-03 05:57:51.236585894 +0000
+@@ -7,6 +7,9 @@
+ #ifndef GADGETS_LAYOUT_H
+ #define GADGETS_LAYOUT_H
+ 
++/* included by the AmigaOS header too */
++#include <intuition/classusr.h>
++
+ #ifndef EXEC_TYPES_H
+ #include <exec/types.h>
+ #endif
+@@ -99,7 +102,7 @@
+ #define LAYOUT_WeightBar        (LAYOUT_Dummy + 43) /* User-adjustable weight bar */
+ 
+ /* Default spacing value */
+-#define INTERSPACING    4
++#define INTERSPACING    1
+ #define INTERSPACE      INTERSPACING
+ 
+ /* Private methods used internally by reaction.library / window.class */
+@@ -215,4 +218,52 @@
+ #define PageEnd             TAG_END)
+ #endif
+ 
++/* layout.gadget V45-V47 additions */
++#define CHILD_WeightBar         LAYOUT_WeightBar
++#define LAYOUT_NoLayout         (LAYOUT_Dummy + 44) /* Don't lay out the children */
++#define LAYOUT_LayoutBackFill   (LAYOUT_Dummy + 45) /* Backfill hook for the group */
++#define LAYOUT_LayoutMagic      (LAYOUT_Dummy + 46) /* Private */
++#define LAYOUT_CharSet          (LAYOUT_Dummy + 47) /* Character set of the labels */
++#define LAYOUT_Immediate        (LAYOUT_Dummy + 48) /* Report GADGETDOWN for the group */
++#define LAYOUT_DoImmediate      (LAYOUT_Dummy + 49) /* ... and pass it on */
++
++#define PAGE_NoDispose          (PAGE_Dummy + 7)    /* Don't dispose pages with the group */
++
++/* Methods to change the children of a group */
++#define LM_ADDCHILD             (0x540001L)
++#define LM_ADDIMAGE             (0x540002L)
++#define LM_REMOVECHILD          (0x540003L)
++#define LM_MODIFYCHILD          (0x540004L)
++
++struct lmAddChild
++{
++    ULONG           MethodID;       /* LM_ADDCHILD */
++    struct Window  *lm_Window;
++    Object         *lm_Object;
++    struct TagItem *lm_ObjectAttrs;
++};
++
++struct lmAddImage
++{
++    ULONG           MethodID;       /* LM_ADDIMAGE */
++    struct Window  *lm_Window;
++    Object         *lm_Object;
++    struct TagItem *lm_ObjectAttrs;
++};
++
++struct lmRemoveChild
++{
++    ULONG           MethodID;       /* LM_REMOVECHILD */
++    struct Window  *lm_Window;
++    Object         *lm_Object;
++};
++
++struct lmModifyChild
++{
++    ULONG           MethodID;       /* LM_MODIFYCHILD */
++    struct Window  *lm_Window;
++    Object         *lm_Object;
++    struct TagItem *lm_ObjectAttrs;
++};
++
+ #endif /* GADGETS_LAYOUT_H */
+diff -ruN a/gadgets/listbrowser.h b/gadgets/listbrowser.h
+--- a/gadgets/listbrowser.h	2026-11-03 02:04:25.721301994 +0000
++++ b/gadgets/listbrowser.h	2026-11-03 05:53:53.569814174 +0000
+@@ -67,7 +67,7 @@
+     ULONG MethodID;
+     struct GadgetInfo *lbs_GInfo;
+     ULONG lbs_Column;
+-    ULONG lbs_Reverse;
++    ULONG lbs_Direction;
+     struct Hook *lbs_CompareHook;
+ };
+ 
+@@ -126,6 +126,8 @@
+ #define LBNCA_CopyInteger       (LBNA_Dummy + 26)   /* Copy integer value */
+ #define LBNCA_WordWrap          (LBNA_Dummy + 27)   /* Word wrap text */
+ #define LBNCA_VertJustify       (LBNA_Dummy + 28)   /* Row vertical justify */
++#define LBNCA_FillPen           (LBNA_Dummy + 29)   /* Column fill pen */
++#define LBNCA_SoftStyle         (LBNA_Dummy + 56)   /* Column font style */
+ 
+ /* Node flags for LBNA_Flags */
+ #define LBFLG_READONLY      1
+@@ -189,6 +191,8 @@
+         STRPTR Text;
+     } lbsm_DataB;
+     APTR lbsm_UserDataB;
++    WORD  lbsm_Column;
++    ULONG lbsm_Direction;
+ };
+ 
+ /*****************************************************************************/
+@@ -202,11 +206,14 @@
+ };
+ 
+ /* ColumnInfo flags */
+-#define CIF_WEIGHTED        (1<<0)
+-#define CIF_FIXED           (1<<1)
+-#define CIF_DRAGGABLE       (1<<2)
+-#define CIF_NOSEPARATORS    (1<<3)
+-#define CIF_SORTABLE        (1<<4)
++#define CIF_WEIGHTED        0        /* default: width shared by weight */
++#define CIF_FIXED           (1<<0)   /* width in pixels */
++#define CIF_DRAGGABLE       (1<<1)   /* separator can be dragged */
++#define CIF_NOSEPARATORS    (1<<2)   /* no separator on the right */
++#define CIF_SORTABLE        (1<<3)   /* clicking the title sorts */
++#define CIF_CENTER          (1<<4)   /* centre the title */
++#define CIF_CENTRE          CIF_CENTER
++#define CIF_RIGHT           (1<<5)   /* right-align the title */
+ 
+ /* ColumnInfo attributes (V45) - using LBNA_Dummy base */
+ #define LBCIA_MemPool       (LBNA_Dummy + 50)   /* MemPool for ColumnInfo */
+@@ -215,10 +222,16 @@
+ #define LBCIA_Weight        (LBNA_Dummy + 53)   /* Column weight */
+ #define LBCIA_Width         (LBNA_Dummy + 54)   /* Column pixel width */
+ #define LBCIA_Flags         (LBNA_Dummy + 55)   /* Column flags (CIF_*) */
+-#define LBCIA_DraggableSeparator (LBNA_Dummy + 56) /* (BOOL) Separator can be dragged */
+-#define LBCIA_Sortable      (LBNA_Dummy + 57)   /* (BOOL) Column can be sorted */
+-#define LBCIA_SortArrow     (LBNA_Dummy + 58)   /* (BOOL) Show sort direction arrow */
+-#define LBCIA_AutoSort      (LBNA_Dummy + 59)   /* (BOOL) Sort on title click */
++#define LBCIA_UserData      (LBNA_Dummy + 57)   /* (APTR) */
++#define LBCIA_AutoSort      (LBNA_Dummy + 58)   /* (BOOL) Sort on title click */
++#define LBCIA_SortDirection (LBNA_Dummy + 59)   /* (ULONG) LBMSORT_* */
++#define LBCIA_Sortable      (LBNA_Dummy + 61)   /* (BOOL) Column can be sorted */
++#define LBCIA_DraggableSeparator (LBNA_Dummy + 62) /* (BOOL) Separator can be dragged */
++#define LBCIA_Separator     (LBNA_Dummy + 63)   /* (BOOL) Draw a separator */
++#define LBCIA_SortArrow     (LBNA_Dummy + 64)   /* (BOOL) Show sort direction arrow */
++#define LBCIA_CopyTitle     (LBNA_Dummy + 65)   /* (BOOL) Keep a copy of the title */
++#define LBCIA_SoftStyle     (LBNA_Dummy + 66)   /* (UBYTE) Title font style */
++#define LBCIA_HorizJustify  (LBNA_Dummy + 67)   /* (ULONG) Title justification */
+ #define LBCIA_CompareHook   (LBNA_Dummy + 60)   /* (struct Hook *) Node compare hook */
+ 
+ /*****************************************************************************/
+@@ -282,14 +295,25 @@
+ #define LISTBROWSER_FastRender      (LISTBROWSER_Dummy + 53) /* Use mask planes */
+ #define LISTBROWSER_TotalVisibleNodes (LISTBROWSER_Dummy + 54) /* Visible node count */
+ #define LISTBROWSER_WrapText        (LISTBROWSER_Dummy + 55) /* Enable word wrap */
+-#define LISTBROWSER_SortColumn      (LISTBROWSER_Dummy + 56) /* Column to sort by (-1 = none) */
+-#define LISTBROWSER_Striping        (LISTBROWSER_Dummy + 57) /* Backfill striping (LBS_*) */
++#define LISTBROWSER_MemPool         (LISTBROWSER_Dummy + 56) /* Pool for nodes */
++#define LISTBROWSER_Bottom          (LISTBROWSER_Dummy + 57) /* Bottom visible node */
++#define LISTBROWSER_MakeNodeVisible (LISTBROWSER_Dummy + 58) /* Scroll node into view */
++#define LISTBROWSER_AutoVirtualWidth (LISTBROWSER_Dummy + 59) /* Virtual width from content */
++#define LISTBROWSER_HintInfoHook    (LISTBROWSER_Dummy + 60) /* Help bubble hook */
++#define LISTBROWSER_SortColumn      (LISTBROWSER_Dummy + 61) /* Column to sort by (-1 = none) */
++#define LISTBROWSER_Striping        (LISTBROWSER_Dummy + 62) /* Backfill striping (LBS_*) */
++#define LISTBROWSER_AllowNoSelection (LISTBROWSER_Dummy + 63) /* Clicking again deselects */
++#define LISTBROWSER_AutoWheel       (LISTBROWSER_Dummy + 64) /* Mouse wheel scrolling */
++#define LISTBROWSER_StayActive      (LISTBROWSER_Dummy + 65) /* Keep keyboard focus */
++#define LISTBROWSER_EditTrigger     (LISTBROWSER_Dummy + 66) /* LBET_* */
+ 
+ /*****************************************************************************/
+ 
+ /* Values for LISTBROWSER_Striping */
+ #define LBS_NONE            0
+ #define LBS_ROWS            1
++#define LBS_COLUMNS         2
++#define LBS_BOTH            3
+ 
+ /* Values for LISTBROWSER_Position */
+ #define LBP_LINEUP          1
+@@ -302,6 +326,8 @@
+ #define LBP_SHIFTRIGHT      11
+ #define LBP_LEFTEDGE        12
+ #define LBP_RIGHTEDGE       13
++#define LBP_PAGELEFT        14
++#define LBP_PAGERIGHT       15
+ 
+ /* Values for LISTBROWSER_RelEvent */
+ #define LBRE_NORMAL         1
+@@ -313,6 +339,16 @@
+ #define LBRE_UNCHECKED      64
+ #define LBRE_TITLECLICK     128
+ #define LBRE_COLUMNADJUST   256
++#define LBRE_EDITTABNEXT    512
++#define LBRE_EDITTABPREV    1024
++
++/* Values for LISTBROWSER_EditTrigger */
++#define LBET_DOUBLECLICK    0
++#define LBET_DELAYEDSECOND  1
++
++/* Values for LBCIA_SortDirection */
++#define LBMSORT_FORWARD     0
++#define LBMSORT_REVERSE     1
+ 
+ /*****************************************************************************/
+ 
+diff -ruN a/gadgets/palette.h b/gadgets/palette.h
+--- a/gadgets/palette.h	2026-11-03 02:04:25.721020995 +0000
++++ b/gadgets/palette.h	2026-11-03 05:59:16.505711633 +0000
+@@ -7,6 +7,9 @@
+ #ifndef GADGETS_PALETTE_H
+ #define GADGETS_PALETTE_H
+ 
++/* included by the AmigaOS header too */
++#include <intuition/gadgetclass.h>
++
+ #ifndef EXEC_TYPES_H
+ #include <exec/types.h>
+ #endif
+@@ -37,4 +40,34 @@
+ #define PaletteEnd      TAG_END)
+ #endif
+ 
++
++/* PB_DRAW: draw one colour box (V47) */
++struct PBoxDrawMsg
++{
++    ULONG             pbdm_MethodID;        /* PB_DRAW */
++    struct RastPort  *pbdm_RastPort;
++    struct DrawInfo  *pbdm_DrawInfo;
++    struct Rectangle  pbdm_Bounds;
++    ULONG             pbdm_State;
++    ULONG             pbdm_Color;           /* palette index */
++    struct Gadget    *pbdm_Gadget;
++};
++
++/* palette.gadget V47 additions */
++#define PALETTE_MinColours  (PALETTE_Dummy + 5)  /* (UWORD) fewest colour boxes to show */
++#define PALETTE_RenderHook  (PALETTE_Dummy + 7)  /* (struct Hook *) draws each colour box */
++
++/* Message for PALETTE_RenderHook */
++#define PB_DRAW             0x202L
++
++/* Return values of the render hook */
++#define PBCB_OK             0
++#define PBCB_UNKNOWN        1
++
++/* State of the box being drawn */
++#define PBR_NORMAL          0
++#define PBR_SELECTED        1
++#define PBR_NORMALDISABLED  2
++#define PBR_SELECTEDDISABLED 8
++
+ #endif /* GADGETS_PALETTE_H */
+diff -ruN a/gadgets/radiobutton.h b/gadgets/radiobutton.h
+--- a/gadgets/radiobutton.h	2026-11-03 02:04:25.721581463 +0000
++++ b/gadgets/radiobutton.h	2026-11-03 06:00:35.873096601 +0000
+@@ -7,6 +7,9 @@
+ #ifndef GADGETS_RADIOBUTTON_H
+ #define GADGETS_RADIOBUTTON_H
+ 
++/* included by the AmigaOS header too */
++#include <intuition/gadgetclass.h>
++
+ #ifndef EXEC_TYPES_H
+ #include <exec/types.h>
+ #endif
+@@ -38,4 +41,9 @@
+ #define RadioButtonEnd      TAG_END)
+ #endif
+ 
++/* Node attributes */
++#define RBNA_Label          (RBNA_Dummy + 2)    /* (STRPTR) Button label */
++#define RBNA_HintInfo       (RBNA_Dummy + 3)    /* (STRPTR) Help bubble text */
++#define RBNA_Disabled       (RBNA_Dummy + 4)    /* (BOOL) Button is disabled */
++
+ #endif /* GADGETS_RADIOBUTTON_H */
+diff -ruN a/gadgets/slider.h b/gadgets/slider.h
+--- a/gadgets/slider.h	2026-11-03 02:04:25.721606375 +0000
++++ b/gadgets/slider.h	2026-11-03 05:58:55.949329366 +0000
+@@ -38,8 +38,19 @@
+ #define SLIDER_Invert           (SLIDER_Dummy + 14)  /* Invert min/max positions (BOOL) */
+ #define SLIDER_KnobDelta        (SLIDER_Dummy + 15)  /* Knob movement delta (WORD) */
+ #define SLIDER_LevelFormat      (SLIDER_Dummy + 16)  /* (STRPTR) printf-style format for level text */
+-#define SLIDER_LevelMaxLen      (SLIDER_Dummy + 17)  /* (LONG)   max chars in formatted level text */
+-#define SLIDER_LevelPlace       (SLIDER_Dummy + 18)  /* (LONG)   PLACETEXT_xx â€” where to draw level */
++#define SLIDER_LevelPlace       (SLIDER_Dummy + 17)  /* (LONG)   PLACETEXT_xx: where to draw level */
++#define SLIDER_LevelJustify     (SLIDER_Dummy + 18)  /* (LONG)   SLJ_*: justification of the level text */
++#define SLIDER_LevelDomain      (SLIDER_Dummy + 19)  /* (STRPTR) widest level text, for sizing */
++#define SLIDER_LevelSpace       (SLIDER_Dummy + 20)  /* (LONG)   gap between slider and level text */
++#define SLIDER_LevelHook        (SLIDER_Dummy + 21)  /* (struct Hook *) formats the level text */
++#define SLIDER_LevelMaxLen      (SLIDER_Dummy + 22)  /* (LONG)   max chars in formatted level text */
++#define SLIDER_NotifyDisable    (SLIDER_Dummy + 23)  /* (BOOL)   no notification while dragging */
++#define SLIDER_InitDispHook     (SLIDER_Dummy + 24)  /* (struct Hook *) called once for the domain */
++
++/* SLIDER_LevelJustify */
++#define SLJ_LEFT    0
++#define SLJ_CENTER  1
++#define SLJ_RIGHT   2
+ 
+ /* Orientation modes */
+ #define SORIENT_HORIZ           FREEHORIZ
+diff -ruN a/gadgets/space.h b/gadgets/space.h
+--- a/gadgets/space.h	2026-11-03 02:04:25.721270594 +0000
++++ b/gadgets/space.h	2026-11-03 06:00:35.888182117 +0000
+@@ -7,6 +7,9 @@
+ #ifndef GADGETS_SPACE_H
+ #define GADGETS_SPACE_H
+ 
++/* included by the AmigaOS header too */
++#include <intuition/gadgetclass.h>
++
+ #ifndef EXEC_TYPES_H
+ #include <exec/types.h>
+ #endif
+@@ -35,4 +38,7 @@
+ #define SpaceEnd        TAG_END)
+ #endif
+ 
++#define SPACE_DomainBevel   (SPACE_Dummy + 9)   /* (BOOL) Include the bevel in the size */
++#define SPACE_RenderBox     (SPACE_Dummy + 10)  /* (struct IBox *) Inner area (get) */
++
+ #endif /* GADGETS_SPACE_H */
+diff -ruN a/gadgets/speedbar.h b/gadgets/speedbar.h
+--- a/gadgets/speedbar.h	2026-11-03 02:04:25.720974796 +0000
++++ b/gadgets/speedbar.h	2026-11-03 05:56:58.302160878 +0000
+@@ -7,6 +7,9 @@
+ #ifndef GADGETS_SPEEDBAR_H
+ #define GADGETS_SPEEDBAR_H
+ 
++/* included by the AmigaOS header too */
++#include <intuition/gadgetclass.h>
++
+ #ifndef EXEC_TYPES_H
+ #include <exec/types.h>
+ #endif
+@@ -81,4 +84,34 @@
+ #define SpeedBarEnd     TAG_END)
+ #endif
+ 
++/* Speedbar V45-V47 additions */
++#define SBNA_Text           (SBNA_Dummy + 16)  /* Button label */
++#define SBNA_Spacer         (SBNA_Dummy + 17)  /* Node is empty space */
++#define SBNA_Separator      (SBNA_Dummy + 18)  /* Node is a separator bar */
++#define SBNA_HintInfo       (SBNA_Dummy + 19)  /* Help bubble text */
++#define SBNA_ButtonID       (SBNA_Dummy + 20)  /* Button ID */
++
++#define SPEEDBAR_Font           (SPEEDBAR_Dummy + 18)  /* Label font */
++#define SPEEDBAR_TopNode        (SPEEDBAR_Dummy + 19)  /* First visible node */
++#define SPEEDBAR_ButtonType     (SPEEDBAR_Dummy + 20)  /* SBTYPE_* */
++#define SPEEDBAR_HorizPadding   (SPEEDBAR_Dummy + 21)  /* Space left and right of the contents */
++#define SPEEDBAR_VertPadding    (SPEEDBAR_Dummy + 22)  /* Space above and below */
++#define SPEEDBAR_ButtonBevelStyle (SPEEDBAR_Dummy + 0x801) /* Bevel of each button */
++
++/* SPEEDBAR_ButtonType */
++#define SBTYPE_BOTH     0
++#define SBTYPE_TEXT     1
++#define SBTYPE_IMAGE    2
++
++/* Change the attributes of one button */
++#define SBM_SETNODEATTRS    (0x58000AL)
++
++struct sbSetNodeAttrs
++{
++    ULONG              MethodID;
++    struct GadgetInfo *sb_GInfo;
++    struct Node       *sb_Node;
++    struct TagItem    *sb_AttrList;
++};
++
+ #endif /* GADGETS_SPEEDBAR_H */
+diff -ruN a/gadgets/string.h b/gadgets/string.h
+--- a/gadgets/string.h	2026-11-03 02:04:25.721333059 +0000
++++ b/gadgets/string.h	2026-11-03 06:00:35.796502488 +0000
+@@ -7,6 +7,9 @@
+ #ifndef GADGETS_STRING_H
+ #define GADGETS_STRING_H
+ 
++/* included by the AmigaOS header too */
++#include <intuition/gadgetclass.h>
++
+ #ifndef EXEC_TYPES_H
+ #include <exec/types.h>
+ #endif
+@@ -59,4 +62,13 @@
+ #define StringEnd       TAG_END)
+ #endif
+ 
++/* string.gadget V45-V47 additions */
++#define STRINGA_RelVerifySpecial (REACTION_Dummy + 0x005500A) /* (BOOL) Report special keys */
++#define STRINGA_InterimUpdates  (REACTION_Dummy + 0x0055013) /* (BOOL) Notify on every change */
++#define STRINGA_ASLTags         STRINGA_InterimUpdates
++#define STRINGA_MarkActive      (REACTION_Dummy + 0x0055014) /* (BOOL) Select all on activation */
++#define STRINGA_DisablePopup    (REACTION_Dummy + 0x0055015) /* (BOOL) No context menu */
++#define STRINGA_MinVal          (REACTION_Dummy + 0x0055016) /* (LONG) Lower limit for integers */
++#define STRINGA_MaxVal          (REACTION_Dummy + 0x0055017) /* (LONG) Upper limit for integers */
++
+ #endif /* GADGETS_STRING_H */
+diff -ruN a/graphics/clip.h b/graphics/clip.h
+--- a/graphics/clip.h	2026-11-03 02:04:25.728272760 +0000
++++ b/graphics/clip.h	2026-11-03 06:00:36.152532214 +0000
+@@ -31,80 +31,51 @@
+ 
+ struct Layer
+ {
+-    struct Layer     	    * front;
+-    struct Layer     	    * back;
+-    struct ClipRect  	    * ClipRect;
+-    struct RastPort  	    * rp;
+-    struct Rectangle          bounds;
+-
+-#if 1
+-    struct Layer     	    * parent; 	    	    	/* PRIVATE !!! */
+-#else
+-    UBYTE   	    	      reserved[4];
+-#endif
+-    UWORD   	    	      priority;
+-    UWORD   	    	      Flags;
+-
+-    struct BitMap   	    * SuperBitMap;
+-    struct ClipRect 	    * SuperClipRect;
+-
+-    APTR    	    	      Window;
+-    WORD    	    	      Scroll_X;
+-    WORD    	    	      Scroll_Y;
+-
+-    struct ClipRect 	    * cr;
+-    struct ClipRect 	    * cr2;
+-    struct ClipRect 	    * crnew;
+-    struct ClipRect 	    * SuperSaveClipRects;
+-    struct ClipRect 	    * _cliprects;
+-
++    struct Layer            * front;
++    struct Layer            * back;
++    struct ClipRect         * ClipRect;         /* active cliprects */
++    struct RastPort         * rp;
++    struct Rectangle          bounds;           /* screen bounds */
++    struct Layer            * nlink;            /* V45: next back layer */
++    UWORD                     priority;         /* private */
++    UWORD                     Flags;            /* LAYER* flags */
++    struct BitMap           * SuperBitMap;
++    struct ClipRect         * SuperClipRect;
++    APTR                      Window;           /* the Intuition window */
++    WORD                      Scroll_X;
++    WORD                      Scroll_Y;
++    struct ClipRect         * OnScreen;         /* private */
++    struct ClipRect         * OffScreen;        /* private */
++    struct ClipRect         * Backup;           /* private */
++    struct ClipRect         * SuperSaveClipRects;
++    struct ClipRect         * Undamaged;        /* private */
+     struct Layer_Info       * LayerInfo;
+     struct SignalSemaphore    Lock;
+     struct Hook             * BackFill;
+-
+-#if 1
+-    struct Region   	    * VisibleRegion; 	    	/* PRIVATE !!! */
+-#else
+-    ULONG   	    	      reserved1;
+-#endif
+-
+-    struct Region   	    * ClipRegion;
+-    struct Region   	    * saveClipRects;
+-
+-    WORD    	    	      Width;
+-    WORD    	    	      Height;
+-
+-#if 1
+-    struct Region   	    * shape;	    	    	/* PRIVATE !!! */
+-    struct Region   	    * shaperegion;  	    	/* PRIVATE !!! */
+-    struct Region   	    * visibleshape; 	    	/* PRIVATE !!! */
+-
+-    UWORD   	    	      nesting;	    	    	/* PRIVATE !!! */
+-    UBYTE   	    	      SuperSaveClipRectCounter;	/* PRIVATE !!! */
+-    UBYTE   	    	      visible;	    	    	/* PRIVATE !!! */
+-
+-    UBYTE   	    	      reserved2[2]; 
+-#else
+-    UBYTE   	    	      reserved2[18];
+-#endif
+-
+-    struct Region   	    * DamageList;
++    ULONG                     reserved1;
++    struct Region           * ClipRegion;
++    struct ClipRect         * clipped;          /* private */
++    WORD                      Width;
++    WORD                      Height;
++    UBYTE                     reserved2[18];
++    struct Region           * DamageList;
+ };
+ 
+ #define MAXSUPERSAVECLIPRECTS	20	/* Max. number of cliprects that are kept preallocated in the list */
+ 
+ struct ClipRect
+ {
+-    struct ClipRect  	    * Next;
+-    struct ClipRect  	    * prev;
+-    struct Layer     	    * lobs;
+-    struct BitMap    	    * BitMap;
++    struct ClipRect         * Next;
++    struct ClipRect         * reservedlink;
++    LONG                      obscured;         /* test for non-zero only */
++    struct BitMap           * BitMap;           /* backing store if obscured */
+     struct Rectangle          bounds;
+-
+-    void    	    	    * _p1;
+-    void    	    	    * _p2;
+-    LONG    	    	      reserved;
+-    LONG    	    	      Flags;
++    struct ClipRect         * vlink;            /* private */
++    struct Layer_Info       * home;             /* owner, or NULL */
++    APTR                      reserved;
++#ifdef NEWCLIPRECTS_1_1
++    LONG                      Flags;            /* private */
++#endif
+ };
+ 
+ /* PRIVATE */
+@@ -121,18 +92,6 @@
+ #define ALIGN_CLIPRECT  16
+ #define ALIGN_OFFSET(x) ((x) & (ALIGN_CLIPRECT-1))
+ 
+-/* PRIVATE (AROS): where the ClipRect's content lies in cr->BitMap. The
+-   screen point (x,y) of the ClipRect is at (x - bounds.MinX + CR_BMOFFX(cr),
+-   y - bounds.MinY + CR_BMOFFY(cr)). A ClipRect with a bitmap of its own uses
+-   (ALIGN_OFFSET(bounds.MinX), 0); one with CR_SHAREDBITMAP set is a view into
+-   a bitmap owned elsewhere (another ClipRect or the layer) and must not
+-   free it. */
+-#define CR_SHAREDBITMAP     4
+-#define CR_BMOFFX(cr)       ((WORD)(IPTR)(cr)->_p1)
+-#define CR_BMOFFY(cr)       ((WORD)(IPTR)(cr)->_p2)
+-#define CR_SETBMOFF(cr, x, y) \
+-    do { (cr)->_p1 = (void *)(IPTR)(WORD)(x); (cr)->_p2 = (void *)(IPTR)(WORD)(y); } while (0)
+-
+ /* AROS: the layer renders into a surface bitmap of its own (one hidden
+    ClipRect covering the layer, CR_SHAREDBITMAP view into the surface) and
+    the display composes that surface onto the screen. It never owns screen
+@@ -202,4 +161,7 @@
+     struct Rectangle *OldBounds;
+ };
+ 
++#define CR_USERCLIPPED      16  /* clipped by the user clip region */
++#define CR_DAMAGECLIPPED    32  /* clipped by the damage list */
++
+ #endif /* GRAPHICS_CLIP_H */
+diff -ruN a/graphics/gels.h b/graphics/gels.h
+--- a/graphics/gels.h	2026-11-03 02:04:25.727976955 +0000
++++ b/graphics/gels.h	2026-11-03 02:08:55.658497253 +0000
+@@ -71,7 +71,7 @@
+     struct VSprite   *NextVSprite;
+     struct VSprite   *PrevVSprite;
+ 
+-    struct IntVSprite *IntVSprite;
++    struct VSprite   *DrawPath;     /* overlay drawing */
+     struct VSprite   *ClearPath;
+ 
+     WORD OldY, OldX;
+diff -ruN a/graphics/gfx.h b/graphics/gfx.h
+--- a/graphics/gfx.h	2026-11-03 02:04:25.727852967 +0000
++++ b/graphics/gfx.h	2026-11-03 06:00:36.167977604 +0000
+@@ -1,6 +1,9 @@
+ #ifndef GRAPHICS_GFX_H
+ #define GRAPHICS_GFX_H
+ 
++/* included by the AmigaOS header too */
++#include <utility/tagitem.h>
++
+ /*
+     Copyright © 1995-2010, The AROS Development Team. All rights reserved.
+     $Id$
+@@ -128,4 +131,7 @@
+ #define BMA_WIDTH  8
+ #define BMA_FLAGS  12
+ 
++#define BMATags_PixelFormat     (TAG_USER + 2)
++#define BMATags_BitmapErrorCode (TAG_USER + 42)
++
+ #endif /* GRAPHICS_GFX_H */
+diff -ruN a/graphics/gfxbase.h b/graphics/gfxbase.h
+--- a/graphics/gfxbase.h	2026-11-03 02:04:25.727767265 +0000
++++ b/graphics/gfxbase.h	2026-11-03 02:08:55.657903911 +0000
+@@ -152,6 +152,8 @@
+ 
+     struct SignalSemaphore * HashTableSemaphore;	/* Semaphore for hash_table access, private in fact */
+     ULONG                  * HWEmul[9];
++    struct RegionRectangle * Scratch;         /* V45, private */
++    ULONG                    ScratchSize;
+ };
+ #define ChunkyToPlanarPtr HWEmul[0]
+ 
+diff -ruN a/graphics/gfxmacros.h b/graphics/gfxmacros.h
+--- a/graphics/gfxmacros.h	2026-11-03 02:04:25.727795485 +0000
++++ b/graphics/gfxmacros.h	2026-11-03 05:40:01.140078529 +0000
+@@ -1,6 +1,11 @@
+ #ifndef GRAPHICS_GFXMACROS_H
+ #define GRAPHICS_GFXMACROS_H
+ 
++/* included by the AmigaOS header too */
++#include <graphics/gfxbase.h>
++#include <hardware/custom.h>
++#include <hardware/dmabits.h>
++
+ /*
+     Copyright © 1995-2001, The AROS Development Team. All rights reserved.
+     $Id$
+diff -ruN a/graphics/gfxnodes.h b/graphics/gfxnodes.h
+--- a/graphics/gfxnodes.h	2026-11-03 02:04:25.728056418 +0000
++++ b/graphics/gfxnodes.h	2026-11-03 05:40:01.140543588 +0000
+@@ -1,6 +1,9 @@
+ #ifndef GRAPHICS_GFXNODES_H
+ #define GRAPHICS_GFXNODES_H
+ 
++/* included by the AmigaOS header too */
++#include <exec/types.h>
++
+ /*
+     Copyright © 1995-2010, The AROS Development Team. All rights reserved.
+     $Id$
+diff -ruN a/graphics/layers.h b/graphics/layers.h
+--- a/graphics/layers.h	2026-11-03 02:04:25.727905393 +0000
++++ b/graphics/layers.h	2026-11-03 06:00:36.182879062 +0000
+@@ -1,6 +1,9 @@
+ #ifndef GRAPHICS_LAYERS_H
+ #define GRAPHICS_LAYERS_H
+ 
++/* included by the AmigaOS header too */
++#include <exec/lists.h>
++
+ /*
+     Copyright © 1995-2011, The AROS Development Team. All rights reserved.
+     $Id$
+@@ -15,26 +18,22 @@
+ 
+ struct Layer_Info
+ {
+-    struct Layer    * top_layer;
+-    struct Layer    * check_lp;
+-    struct ClipRect * obs;
+-    struct ClipRect * FreeClipRects;
+-
+-    LONG PrivateReserve1;
+-    LONG PrivateReserve2;
+-
+-    struct SignalSemaphore Lock;
+-    struct MinList         gs_Head;
+-
+-    WORD   PrivateReserve3;
+-    VOID * PrivateReserve4;
+-
+-    UWORD  Flags;
+-    BYTE   fatten_count;
+-    BYTE   LockLayersCount;
+-    WORD   PrivateReserve5;
+-    VOID * BlankHook;
+-    VOID * LayerInfo_extra;
++    struct Layer           * top_layer;         /* frontmost layer */
++    void                   * resPtr1;
++    void                   * resPtr2;
++    struct ClipRect        * FreeClipRects;     /* private */
++    struct Rectangle         bounds;            /* all layers are clipped to this */
++    struct SignalSemaphore   Lock;
++    struct MinList           gs_Head;           /* private */
++    WORD                     PrivateReserve3;
++    void                   * PrivateReserve4;
++    UWORD                    Flags;
++    BYTE                     res_count;
++    BYTE                     LockLayersCount;
++    BYTE                     PrivateReserve5;
++    BYTE                     UserClipRectsCount;
++    struct Hook            * BlankHook;
++    void                   * resPtr5;
+ };
+ 
+ #define NEWLAYERINFO_CALLED 1
+@@ -65,4 +64,10 @@
+     LONG              OffsetY;
+ };
+ 
++#define LAYERSAVEBACK   0x0800  /* keep the area under the layer */
++#define LAYERHIDDEN     0x1000  /* layer is hidden */
++
++#define LAYER_BACKMOST  0
++#define LAYER_FRONTMOST 1
++
+ #endif /* GRAPHICS_LAYERS_H */
+diff -ruN a/graphics/modeid.h b/graphics/modeid.h
+--- a/graphics/modeid.h	2026-11-03 02:04:25.728026526 +0000
++++ b/graphics/modeid.h	2026-11-03 06:01:34.245128561 +0000
+@@ -342,4 +342,13 @@
+ #define BIDTAG_BlueBits        0x8000000C
+ #define BIDTAG_GreenBits       0x8000000D
+ 
++/* More display mode keys */
++#define VGAEXTRALORESEHB_KEY        0x00031084
++#define VGAEXTRALORESEHBLACE_KEY    0x00031085
++#define VGALORESEHB_KEY             0x00039084
++#define VGALORESEHBLACE_KEY         0x00039085
++#define EURO72LORESDBL_KEY          0x00069000
++
++#define BIDTAG_GfxPrivate           (TAG_USER + 14)
++
+ #endif /* GRAPHICS_MODEID_H */
+diff -ruN a/graphics/monitor.h b/graphics/monitor.h
+--- a/graphics/monitor.h	2026-11-03 02:04:25.728127588 +0000
++++ b/graphics/monitor.h	2026-11-03 05:55:34.190847733 +0000
+@@ -1,6 +1,10 @@
+ #ifndef GRAPHICS_MONITOR_H
+ #define GRAPHICS_MONITOR_H
+ 
++/* included by the AmigaOS header too */
++#include <exec/types.h>
++#include <graphics/view.h>
++
+ /*
+     Copyright © 1995-2019, The AROS Development Team. All rights reserved.
+     $Id$
+@@ -92,7 +96,7 @@
+ #define MIN_PAL_ROW             29
+ #define STANDARD_NTSC_BEAMCON   0x0000
+ #define STANDARD_PAL_BEAMCON    0x0020
+-#define SPECIAL_BEAMCON         (VARVBLANK | VARHSYNC | VARVSYNC | VARBEAM | VSYNCTRUE | LOLDIS | CSBLANK)
++#define SPECIAL_BEAMCON         0x1B8A  /* VARVBLANK|VARHSYNC|VARVSYNC|VARBEAM|VSYNCTRUE|LOLDIS|CSBLANK */
+ #define STANDARD_DENISE_MIN     93
+ #define STANDARD_DENISE_MAX     455
+ #define STANDARD_COLORCLOCKS    226
+@@ -120,7 +124,7 @@
+ #define VGA_VSSTRT              0x0153
+ #define VGA_VSSTOP              0x0235
+ 
+-#define BROADCAST_BEAMCON       (LOLDIS | CSBLANK)
++#define BROADCAST_BEAMCON       0x0808  /* LOLDIS|CSBLANK */
+ #define BROADCAST_HBSTRT        0x01
+ #define BROADCAST_HBSTOP        0x27
+ #define BROADCAST_HSSTRT        0x06
+@@ -155,4 +159,25 @@
+     struct AnalogSignalInterval vsync;
+ };
+ 
++/* Old names of the MonitorSpec request flags */
++#define REQUEST_NTSC            MSF_REQUEST_NTSC
++#define REQUEST_PAL             MSF_REQUEST_PAL
++#define REQUEST_SPECIAL         MSF_REQUEST_SPECIAL
++#define REQUEST_A2024           MSF_REQUEST_A2024
++
++/* 70 Hz VGA timing */
++#define VGA70_COLORCLOCKS       VGA_COLORCLOCKS
++#define VGA70_TOTAL_ROWS        449
++#define VGA70_DENISE_MIN        59
++#define MIN_VGA70_ROW           35
++#define VGA70_HBSTRT            0x08
++#define VGA70_HBSTOP            0x1E
++#define VGA70_HSSTRT            0x0E
++#define VGA70_HSSTOP            0x1C
++#define VGA70_VBSTRT            0x0000
++#define VGA70_VBSTOP            0x0F73
++#define VGA70_VSSTRT            0x02A6
++#define VGA70_VSSTOP            0x0388
++#define VGA70_BEAMCON           (SPECIAL_BEAMCON ^ 0x0002)  /* without VSYNCTRUE */
++
+ #endif /* GRAPHICS_MONITOR_H */
+diff -ruN a/graphics/rastport.h b/graphics/rastport.h
+--- a/graphics/rastport.h	2026-11-03 02:04:25.728001625 +0000
++++ b/graphics/rastport.h	2026-11-03 02:08:13.168564471 +0000
+@@ -55,7 +55,7 @@
+ {
+     struct Layer    * Layer;
+     struct BitMap   * BitMap;
+-    const UWORD     * AreaPtrn;
++    UWORD           * AreaPtrn;
+     struct TmpRas   * TmpRas;
+     struct AreaInfo * AreaInfo;
+     struct GelsInfo * GelsInfo;
+@@ -82,14 +82,11 @@
+     UWORD             TxBaseline;
+     WORD              TxSpacing;
+     APTR            * RP_User;
+-    /*
+-     * 30 bytes (on 32-bit architectures) of private space follow.
+-     * On 64-bit architectures this space is doubled.
+-     * Do not touch!!!
+-     */
+-    APTR	      RP_Extra;
+-    IPTR              longreserved[6];
+-    UBYTE             reserved[2];
++    ULONG             longreserved[2];
++#ifndef GFX_RASTPORT_1_2
++    UWORD             wordreserved[7];  /* used to be a node */
++    UBYTE             reserved[8];      /* for future use */
++#endif
+ };
+ 
+ /* Flags */
+diff -ruN a/graphics/rpattr.h b/graphics/rpattr.h
+--- a/graphics/rpattr.h	2026-11-03 02:04:25.727736176 +0000
++++ b/graphics/rpattr.h	2026-11-03 06:00:36.198197456 +0000
+@@ -35,4 +35,6 @@
+ #define RPCRF_RELBOTTOM     	    0x02       /* ClipRectangle.MaxY is relative to bottom of layer/bitmap */
+ #define RPCRF_VALID 	    	    0x04       /* private */
+ 
++#define RPTAG_OutLinePen    RPTAG_OutlinePen
++
+ #endif /* GRAPHICS_RPATTR_H */
+diff -ruN a/graphics/view.h b/graphics/view.h
+--- a/graphics/view.h	2026-11-03 02:04:25.728478805 +0000
++++ b/graphics/view.h	2026-11-03 06:01:34.264334164 +0000
+@@ -204,7 +204,7 @@
+ #define SPRITERESN_140NS   0x01
+ #define SPRITERESN_70NS    0x02
+ #define SPRITERESN_35NS    0x03
+-#define SPRITERESN_DEFAULT 0xFF
++#define SPRITERESN_DEFAULT -1
+ 
+ /*          *** RasInfo ***
+  *
+@@ -247,7 +247,7 @@
+ 
+ /* PRIVATE */
+ #define VPB_TENHZ     4
+-#define VPF_TENHZ (1<<4)
++#define VPF_TENHZ (1<<5)   /* NDK value; VPB_TENHZ is 4 */
+ #define VPB_A2024     6
+ #define VPF_A2024 (1<<6)
+ 
+@@ -323,4 +323,11 @@
+ 	UWORD	dbi_BeamPos2;
+ };
+ 
++/* NDK spellings */
++#define COLORMAP_TYPE_V1_4  COLORMAP_TYPE_V36
++#define VPXB_STRADDLES_256  VPXB_STRADDLES256
++#define VPXF_STRADDLES_256  VPXF_STRADDLES256
++#define VPXB_STRADDLES_512  VPXB_STRADDLES512
++#define VPXF_STRADDLES_512  VPXF_STRADDLES512
++
+ #endif /* GRAPHICS_VIEW_H */
+diff -ruN a/hardware/blit.h b/hardware/blit.h
+--- a/hardware/blit.h	2026-11-03 02:04:25.725096476 +0000
++++ b/hardware/blit.h	2026-11-03 05:53:04.655323479 +0000
+@@ -29,7 +29,7 @@
+   struct bltnode * n;
+   int    (*function) ();
+   char   stat;
+-  short  bltsize;
++  short  blitsize;
+   short  beamsync;
+   int    (*cleanup) ();
+ };
+@@ -40,4 +40,58 @@
+ #define CLEANUP 0x40
+ #define CLEANME 0x40
+ 
++/* More minterm combinations */
++#define A_OR_B    (ABC|ANBC|NABC|ABNC|ANBNC|NABNC)
++#define A_OR_C    (ABC|NABC|ABNC|ANBC|NANBC|ANBNC)
++#define A_TO_D    (ABC|ANBC|ABNC|ANBNC)
++
++/* BLTSIZE: height in the upper 10 bits, width in words in the lower 6 */
++#define HSIZEBITS       6
++#define VSIZEBITS       (16-HSIZEBITS)
++#define HSIZEMASK       0x3f
++#define VSIZEMASK       0x3ff
++#define MINBYTESPERROW  128
++#define MAXBYTESPERROW  4096
++
++/* BLTCON0: channel enables and shift position */
++#define BC0B_DEST       8
++#define BC0B_SRCC       9
++#define BC0B_SRCB       10
++#define BC0B_SRCA       11
++#define BC0F_DEST       (1<<BC0B_DEST)
++#define BC0F_SRCC       (1<<BC0B_SRCC)
++#define BC0F_SRCB       (1<<BC0B_SRCB)
++#define BC0F_SRCA       (1<<BC0B_SRCA)
++#define DEST            BC0F_DEST
++#define SRCC            BC0F_SRCC
++#define SRCB            BC0F_SRCB
++#define SRCA            BC0F_SRCA
++#define ASHIFTSHIFT     12
++#define BSHIFTSHIFT     12
++
++/* BLTCON1: area mode */
++#define LINEMODE        0x01
++#define BLITREVERSE     0x02
++#define BC1F_DESC       BLITREVERSE
++#define FILL_CARRYIN    0x04
++#define FILL_OR         0x08
++#define FILL_XOR        0x10
++
++/* BLTCON1: line mode */
++#define ONEDOT          0x02
++#define AUL             0x04
++#define SUL             0x08
++#define SUD             0x10
++#define OVFLAG          0x20
++#define SIGNFLAG        0x40
++
++#define OCTANT8         (SUD|SUL)
++#define OCTANT7         AUL
++#define OCTANT6         (SUL|AUL)
++#define OCTANT5         (SUD|SUL|AUL)
++#define OCTANT4         (SUD|AUL)
++#define OCTANT3         SUL
++#define OCTANT2         0
++#define OCTANT1         SUD
++
+ #endif /* HARDWARE_BLIT_H */
+diff -ruN a/hardware/cia.h b/hardware/cia.h
+--- a/hardware/cia.h	2026-11-03 02:04:25.725241579 +0000
++++ b/hardware/cia.h	2026-11-03 05:52:52.664519995 +0000
+@@ -16,35 +16,35 @@
+ struct CIA
+ {
+     UBYTE ciapra;
+-    UBYTE ciapad0[255];
++    UBYTE pad0[0xff];
+     UBYTE ciaprb;
+-    UBYTE ciapad1[255];
++    UBYTE pad1[0xff];
+     UBYTE ciaddra;
+-    UBYTE ciapad2[255];
++    UBYTE pad2[0xff];
+     UBYTE ciaddrb;
+-    UBYTE ciapad3[255];
++    UBYTE pad3[0xff];
+     UBYTE ciatalo;
+-    UBYTE ciapad4[255];
++    UBYTE pad4[0xff];
+     UBYTE ciatahi;
+-    UBYTE ciapad5[255];
++    UBYTE pad5[0xff];
+     UBYTE ciatblo;
+-    UBYTE ciapad6[255];
++    UBYTE pad6[0xff];
+     UBYTE ciatbhi;
+-    UBYTE ciapad7[255];
++    UBYTE pad7[0xff];
+     UBYTE ciatodlow;
+-    UBYTE ciapad8[255];
++    UBYTE pad8[0xff];
+     UBYTE ciatodmid;
+-    UBYTE ciapad9[255];
++    UBYTE pad9[0xff];
+     UBYTE ciatodhi;
+-    UBYTE ciapad10[255];
++    UBYTE pad10[0xff];
+     UBYTE unusedreg;
+-    UBYTE ciapad11[255];
++    UBYTE pad11[0xff];
+     UBYTE ciasdr;
+-    UBYTE ciapad12[255];
++    UBYTE pad12[0xff];
+     UBYTE ciaicr;
+-    UBYTE ciapad13[255];
++    UBYTE pad13[0xff];
+     UBYTE ciacra;
+-    UBYTE ciapad14[255];
++    UBYTE pad14[0xff];
+     UBYTE ciacrb;
+ };
+ 
+@@ -86,4 +86,89 @@
+ #define CIACRBF_OUTMODE                 (1 << CIACRBB_OUTMODE)
+ #define CIACRBF_ALARM	                (1 << CIACRBB_ALARM)
+ 
++/* Interrupt control register: TA/TB above, the rest here */
++#define CIAICRB_ALRM    2
++#define CIAICRB_SP      3
++#define CIAICRB_FLG     4
++#define CIAICRB_IR      7
++#define CIAICRB_SETCLR  7
++#define CIAICRF_TA      (1<<CIAICRB_TA)
++#define CIAICRF_TB      (1<<CIAICRB_TB)
++#define CIAICRF_ALRM    (1<<CIAICRB_ALRM)
++#define CIAICRF_SP      (1<<CIAICRB_SP)
++#define CIAICRF_FLG     (1<<CIAICRB_FLG)
++#define CIAICRF_IR      (1<<CIAICRB_IR)
++#define CIAICRF_SETCLR  (1<<CIAICRB_SETCLR)
++
++/* Control register A: force-load strobe and timer input select */
++#define CIACRAB_LOAD    4
++#define CIACRAB_INMODE  5
++#define CIACRAF_LOAD    (1<<CIACRAB_LOAD)
++#define CIACRAF_INMODE  (1<<CIACRAB_INMODE)
++
++/* Control register B: timer B input mode is two bits */
++#define CIACRBB_LOAD    4
++#define CIACRBB_INMODE0 5
++#define CIACRBB_INMODE1 6
++#define CIACRBF_LOAD    (1<<CIACRBB_LOAD)
++#define CIACRBF_INMODE0 (1<<CIACRBB_INMODE0)
++#define CIACRBF_INMODE1 (1<<CIACRBB_INMODE1)
++#define CIACRBF_IN_PHI2   0                                  /* count 02 clocks */
++#define CIACRBF_IN_CNT    CIACRBF_INMODE0                    /* count CNT pulses */
++#define CIACRBF_IN_TA     CIACRBF_INMODE1                    /* count timer A underflows */
++#define CIACRBF_IN_CNT_TA (CIACRBF_INMODE0|CIACRBF_INMODE1)  /* ... while CNT is high */
++
++/* CIA-A port A: overlay, LED, disk status, fire buttons */
++#define CIAB_OVERLAY    0
++#define CIAB_LED        1
++#define CIAB_DSKCHANGE  2
++#define CIAB_DSKPROT    3
++#define CIAB_DSKTRACK0  4
++#define CIAB_DSKRDY     5
++#define CIAB_GAMEPORT0  6
++#define CIAB_GAMEPORT1  7
++#define CIAF_OVERLAY    (1<<CIAB_OVERLAY)
++#define CIAF_LED        (1<<CIAB_LED)
++#define CIAF_DSKCHANGE  (1<<CIAB_DSKCHANGE)
++#define CIAF_DSKPROT    (1<<CIAB_DSKPROT)
++#define CIAF_DSKTRACK0  (1<<CIAB_DSKTRACK0)
++#define CIAF_DSKRDY     (1<<CIAB_DSKRDY)
++#define CIAF_GAMEPORT1  (1<<CIAB_GAMEPORT1)
++
++/* CIA-B port A: parallel port status and serial handshake lines */
++#define CIAB_PRTRBUSY   0
++#define CIAB_PRTRPOUT   1
++#define CIAB_PRTRSEL    2
++#define CIAB_COMDSR     3
++#define CIAB_COMCTS     4
++#define CIAB_COMCD      5
++#define CIAB_COMRTS     6
++#define CIAB_COMDTR     7
++#define CIAF_PRTRBUSY   (1<<CIAB_PRTRBUSY)
++#define CIAF_PRTRPOUT   (1<<CIAB_PRTRPOUT)
++#define CIAF_PRTRSEL    (1<<CIAB_PRTRSEL)
++#define CIAF_COMDSR     (1<<CIAB_COMDSR)
++#define CIAF_COMCTS     (1<<CIAB_COMCTS)
++#define CIAF_COMCD      (1<<CIAB_COMCD)
++#define CIAF_COMRTS     (1<<CIAB_COMRTS)
++#define CIAF_COMDTR     (1<<CIAB_COMDTR)
++
++/* CIA-B port B: floppy drive control */
++#define CIAB_DSKSTEP    0
++#define CIAB_DSKDIREC   1
++#define CIAB_DSKSIDE    2
++#define CIAB_DSKSEL0    3
++#define CIAB_DSKSEL1    4
++#define CIAB_DSKSEL2    5
++#define CIAB_DSKSEL3    6
++#define CIAB_DSKMOTOR   7
++#define CIAF_DSKSTEP    (1<<CIAB_DSKSTEP)
++#define CIAF_DSKDIREC   (1<<CIAB_DSKDIREC)
++#define CIAF_DSKSIDE    (1<<CIAB_DSKSIDE)
++#define CIAF_DSKSEL0    (1<<CIAB_DSKSEL0)
++#define CIAF_DSKSEL1    (1<<CIAB_DSKSEL1)
++#define CIAF_DSKSEL2    (1<<CIAB_DSKSEL2)
++#define CIAF_DSKSEL3    (1<<CIAB_DSKSEL3)
++#define CIAF_DSKMOTOR   (1<<CIAB_DSKMOTOR)
++
+ #endif /* HARDWARE_CIA_H */
+diff -ruN a/images/bevel.h b/images/bevel.h
+--- a/images/bevel.h	2026-11-03 02:04:25.720673955 +0000
++++ b/images/bevel.h	2026-11-03 06:00:36.212885989 +0000
+@@ -80,4 +80,8 @@
+ #define BevelEnd        TAG_END)
+ #endif
+ 
++#define BVS_CONTAINER   12  /* frame around a group of gadgets */
++#define BVS_KNOB        13  /* prop knob */
++#define BVS_DISPLAY     14  /* read-only display area */
++
+ #endif /* IMAGES_BEVEL_H */
+diff -ruN a/images/bitmap.h b/images/bitmap.h
+--- a/images/bitmap.h	2026-11-03 02:04:25.720697452 +0000
++++ b/images/bitmap.h	2026-11-03 05:59:16.455680725 +0000
+@@ -39,13 +39,14 @@
+ #define BITMAP_OffsetY          (BITMAP_Dummy + 15) /* (LONG) Y source offset */
+ #define BITMAP_SelectOffsetX    (BITMAP_Dummy + 16) /* (LONG) Selected X offset */
+ #define BITMAP_SelectOffsetY    (BITMAP_Dummy + 17) /* (LONG) Selected Y offset */
+-#define BITMAP_DisabledSourceFile (BITMAP_Dummy + 18) /* (STRPTR) Disabled state filename */
+-#define BITMAP_DisabledBitMap     (BITMAP_Dummy + 19) /* (struct BitMap *) Disabled state bitmap */
+-#define BITMAP_DisabledWidth      (BITMAP_Dummy + 20) /* (LONG) Disabled bitmap width */
+-#define BITMAP_DisabledHeight     (BITMAP_Dummy + 21) /* (LONG) Disabled bitmap height */
+-#define BITMAP_DisabledMaskPlane  (BITMAP_Dummy + 22) /* (APTR) Disabled state mask plane */
+-#define BITMAP_DisabledOffsetX    (BITMAP_Dummy + 23) /* (LONG) Disabled X offset */
+-#define BITMAP_DisabledOffsetY    (BITMAP_Dummy + 24) /* (LONG) Disabled Y offset */
++#define BITMAP_Transparent        (BITMAP_Dummy + 18) /* (BOOL) Colour 0 is transparent */
++#define BITMAP_DisabledSourceFile (BITMAP_Dummy + 19) /* (STRPTR) Disabled state filename */
++#define BITMAP_DisabledBitMap     (BITMAP_Dummy + 20) /* (struct BitMap *) Disabled state bitmap */
++#define BITMAP_DisabledWidth      (BITMAP_Dummy + 21) /* (LONG) Disabled bitmap width */
++#define BITMAP_DisabledHeight     (BITMAP_Dummy + 22) /* (LONG) Disabled bitmap height */
++#define BITMAP_DisabledMaskPlane  (BITMAP_Dummy + 23) /* (APTR) Disabled state mask plane */
++#define BITMAP_DisabledOffsetX    (BITMAP_Dummy + 24) /* (LONG) Disabled X offset */
++#define BITMAP_DisabledOffsetY    (BITMAP_Dummy + 25) /* (LONG) Disabled Y offset */
+ 
+ #ifndef BitMapObject
+ #define BitMapObject    NewObject(NULL, BITMAP_CLASSNAME
+@@ -54,4 +55,10 @@
+ #define BitMapEnd       TAG_END)
+ #endif
+ 
++/* Alpha channel support (V47) */
++#define BITMAP_HasAlpha             (BITMAP_Dummy + 26) /* (BOOL) Image has an alpha channel */
++#define BITMAP_AlphaBitMap          (BITMAP_Dummy + 27) /* (struct BitMap *) Normal alpha */
++#define BITMAP_SelectAlphaBitMap    (BITMAP_Dummy + 28) /* (struct BitMap *) Selected alpha */
++#define BITMAP_DisabledAlphaBitMap  (BITMAP_Dummy + 29) /* (struct BitMap *) Disabled alpha */
++
+ #endif /* IMAGES_BITMAP_H */
+diff -ruN a/images/glyph.h b/images/glyph.h
+--- a/images/glyph.h	2026-11-03 02:04:25.720629273 +0000
++++ b/images/glyph.h	2026-11-03 06:00:36.227907162 +0000
+@@ -55,4 +55,9 @@
+ #define GlyphEnd        TAG_END)
+ #endif
+ 
++#define GLYPH_POPDATE   27
++#define GLYPH_POPCOLOR  28
++#define GLYPH_POPCOLOUR GLYPH_POPCOLOR
++#define GLYPH_SHIFTKEY  32
++
+ #endif /* IMAGES_GLYPH_H */
+diff -ruN a/images/label.h b/images/label.h
+--- a/images/label.h	2026-11-03 02:04:25.720652142 +0000
++++ b/images/label.h	2026-11-03 06:01:34.286471170 +0000
+@@ -52,4 +52,12 @@
+ #define LabelEnd        TAG_END)
+ #endif
+ 
++#define LABEL_MenuMode      (LABEL_Dummy+12) /* (BOOL) Draw like a menu item */
++
++#define LABEL_VerticalAlignment (LABEL_Dummy+10) /* (UWORD) LVALIGN_* */
++#define LABEL_WordWrap      (LABEL_Dummy+11) /* (UWORD) Wrap text at this many pixels */
++
++#define LVALIGN_BOTTOM      0
++#define LVALIGN_BASELINE    1
++
+ #endif /* IMAGES_LABEL_H */
+diff -ruN a/images/led.h b/images/led.h
+--- a/images/led.h	2026-11-03 02:04:25.720582563 +0000
++++ b/images/led.h	2026-11-03 05:58:55.949588649 +0000
+@@ -7,6 +7,9 @@
+ #ifndef IMAGES_LED_H
+ #define IMAGES_LED_H
+ 
++/* included by the AmigaOS header too */
++#include <utility/tagitem.h>
++
+ #ifndef EXEC_TYPES_H
+ #include <exec/types.h>
+ #endif
+@@ -17,13 +20,16 @@
+ #define LED_CLASSNAME       "led.image"
+ #define LED_VERSION         44
+ 
+-#define LED_Dummy           (REACTION_Dummy + 0x1A000)
++#define LED_Dummy           (TAG_USER + 0x04000000)
+ 
+-#define LED_Pairs           (LED_Dummy + 0x0001) /* Digit pair count */
+-#define LED_Time            (LED_Dummy + 0x0002) /* Time display mode */
+-#define LED_Values          (LED_Dummy + 0x0003) /* Value array */
+-#define LED_EditMode        (LED_Dummy + 0x0004) /* Editable digits */
+-#define LED_Pen             (LED_Dummy + 0x0005) /* LED color pen */
++#define LED_Pairs           (LED_Dummy + 1) /* (WORD) Number of digit pairs */
++#define LED_Values          (LED_Dummy + 2) /* (UWORD *) One value per pair */
++#define LED_Colon           (LED_Dummy + 3) /* (BOOL) Draw a colon between pairs */
++#define LED_Negative        (LED_Dummy + 4) /* (BOOL) Draw a minus sign */
++#define LED_Signed          (LED_Dummy + 5) /* (BOOL) Leave room for a sign */
++#define LED_Time            (LED_Dummy + 6) /* (BOOL) Time display mode */
++#define LED_Hexadecimal     (LED_Dummy + 7) /* (BOOL) Show hex digits */
++#define LED_Raw             (LED_Dummy + 8) /* (BOOL) Values are segment bits */
+ 
+ #ifndef LEDObject
+ #define LEDObject       NewObject(NULL, LED_CLASSNAME
+diff -ruN a/images/penmap.h b/images/penmap.h
+--- a/images/penmap.h	2026-11-03 02:04:25.720606871 +0000
++++ b/images/penmap.h	2026-11-03 06:01:34.304147505 +0000
+@@ -54,4 +54,8 @@
+ #define PenMapEnd       TAG_END)
+ #endif
+ 
++#define PENMAP_Compressed       (PENMAP_Dummy + 11) /* (BOOL) Data is run-length packed */
++#define PENMAP_MaskPlane        (PENMAP_Dummy + 12) /* (PLANEPTR) Transparency mask */
++#define PENMAP_SelectMaskPlane  (PENMAP_Dummy + 13) /* (PLANEPTR) ... for the selected image */
++
+ #endif /* IMAGES_PENMAP_H */
+diff -ruN a/intuition/classusr.h b/intuition/classusr.h
+--- a/intuition/classusr.h	2026-11-03 02:04:25.718421251 +0000
++++ b/intuition/classusr.h	2026-11-03 05:51:38.447918583 +0000
+@@ -25,7 +25,7 @@
+ 
+ #ifndef __typedef_Msg
+ #   define __typedef_Msg
+-    typedef struct _struct_Msg
++    typedef struct
+     {
+         STACKED ULONG MethodID;
+     } *Msg;
+diff -ruN a/intuition/gadgetclass.h b/intuition/gadgetclass.h
+--- a/intuition/gadgetclass.h	2026-11-03 02:04:25.718808274 +0000
++++ b/intuition/gadgetclass.h	2026-11-03 05:57:17.559620582 +0000
+@@ -1,6 +1,9 @@
+ #ifndef INTUITION_GADGETCLASS_H
+ #define INTUITION_GADGETCLASS_H
+ 
++/* included by the AmigaOS header too */
++#include <intuition/iobsolete.h>
++
+ /*
+     Copyright © 1995-2018, The AROS Development Team. All rights reserved.
+     $Id$
+@@ -538,4 +541,49 @@
+ #define LORIENT_HORIZ 1
+ #define LORIENT_VERT  2
+ 
++
++/* GM_KEYTEST (V47) */
++struct gpKeyTest
++{
++    ULONG                MethodID;
++    struct GadgetInfo   *gpkt_GInfo;
++    struct IntuiMessage *gpkt_IMsg;         /* the message with the key */
++    ULONG                gpkt_VanillaKey;
++};
++
++/* GM_KEYGOACTIVE (V47) */
++struct gpKeyInput
++{
++    ULONG                MethodID;
++    struct GadgetInfo   *gpk_GInfo;
++    struct InputEvent   *gpk_IEvent;
++    LONG                *gpk_Termination;
++};
++
++/* GM_KEYGOINACTIVE (V47) */
++struct gpKeyGoInactive
++{
++    ULONG                MethodID;
++    struct GadgetInfo   *gpki_GInfo;
++    ULONG                gpki_Abort;        /* TRUE if the input was aborted */
++};
++
++/* gadgetclass V47 additions */
++#define GA_Hidden               (GA_Dummy + 54)  /* (BOOL) gadget is not drawn */
++#define GA_CustomMousePointer   (GA_Dummy + 60)  /* (Object *) pointer while over the gadget */
++#define GA_PointerType          (GA_Dummy + 61)  /* (ULONG) POINTERTYPE_* while over the gadget */
++#define GA_ParentHidden         (GA_Dummy + 62)  /* (BOOL) a parent group is hidden */
++
++#define PGA_KnobImage           (PGA_Dummy + 13) /* (struct Image *) custom knob */
++
++#define GM_Dummy                (-1)
++#define GM_KEYTEST              8
++#define GM_KEYGOACTIVE          9
++#define GM_KEYGOINACTIVE        10
++#define GM_HANDLESCROLL         14
++#define GM_QUERYHOVERED         15
++
++#define GMR_KEYACTIVE           (1L<<4)  /* GM_KEYTEST: wants the key */
++#define GMR_KEYVERIFY           (1L<<5)  /* GM_KEYGOACTIVE: done, report it */
++
+ #endif /* INTUITION_GADGETCLASS_H */
+diff -ruN a/intuition/imageclass.h b/intuition/imageclass.h
+--- a/intuition/imageclass.h	2026-11-03 02:04:25.718678231 +0000
++++ b/intuition/imageclass.h	2026-11-03 05:58:07.047770973 +0000
+@@ -1,6 +1,10 @@
+ #ifndef INTUITION_IMAGECLASS_H
+ #define INTUITION_IMAGECLASS_H
+ 
++/* included by the AmigaOS header too */
++#include <intuition/intuition.h>
++#include <intuition/iobsolete.h>
++
+ /*
+     Copyright Â© 1995-2013, The AROS Development Team. All rights reserved.
+     $Id$
+@@ -192,4 +196,53 @@
+     STACKED struct impSize	imp_Dimensions;
+ };
+ 
++
++/* IM_DOMAINFRAME */
++struct impDomainFrame
++{
++    ULONG            MethodID;
++    struct DrawInfo *imp_DrInfo;
++    struct RastPort *imp_RPort;
++    LONG             imp_Which;             /* IDOMAIN_* */
++    struct IBox      imp_Domain;            /* the result */
++    struct TagItem  *imp_Attrs;
++};
++
++/* imageclass V47 additions */
++#define IA_ShadowPen            (IA_Dummy + 0x09)
++#define IA_HighlightPen         (IA_Dummy + 0x0A)
++#define SYSIA_Pens              IA_Pens
++#define IA_Underscore           (IA_Dummy + 0x1C) /* label: char marking the shortcut */
++#define IA_Scalable             (IA_Dummy + 0x1D) /* image may be scaled */
++#define IA_ActivateKey          (IA_Dummy + 0x1E) /* shortcut key (get) */
++#define IA_Screen               (IA_Dummy + 0x1F) /* screen to draw on */
++#define IA_Precision            (IA_Dummy + 0x20) /* pen precision for ObtainBestPen() */
++#define IA_Orientation          (IA_Dummy + 0x23) /* horizontal or vertical */
++#define IA_Label                (IA_Dummy + 0x28) /* label text */
++#define IA_EraseBackground      (IA_Dummy + 0x2D) /* clear before drawing */
++#define IA_LabelPen             (IA_Dummy + 0x38) /* label colour */
++
++/* More sysiclass images */
++#define SDOWNBACKMAGE           (0x06L)  /* screen depth, old spelling */
++#define ICONIFYIMAGE            (0x16L)  /* window iconify gadget */
++#define MENUMX                  (0x1BL)  /* menu mutual-exclude mark */
++#define MENUSUB                 (0x1CL)  /* menu submenu arrow */
++#define SHIFTKEYIMAGE           (0x2AL)  /* shift key symbol for menus */
++
++/* More frameiclass frames */
++#define FRAME_PROPBORDER        4
++#define FRAME_PROPKNOB          5
++#define FRAME_DISPLAY           6
++#define FRAME_CONTEXT           7
++#define FRAMEF_MINIMAL          (1<<1)
++
++#define IDS_INDETERMINANT       IDS_INDETERMINATE  /* old spelling */
++
++/* Ask an image for its size, given a drawing context */
++#define IM_DOMAINFRAME          0x20AL
++
++#define IDOMAIN_MINIMUM         0
++#define IDOMAIN_NOMINAL         1
++#define IDOMAIN_MAXIMUM         2
++
+ #endif /* INTUITION_IMAGECLASS_H */
+diff -ruN a/intuition/intuition.h b/intuition/intuition.h
+--- a/intuition/intuition.h	2026-11-03 02:04:25.718875640 +0000
++++ b/intuition/intuition.h	2026-11-03 05:55:15.608293222 +0000
+@@ -1,6 +1,9 @@
+ #ifndef INTUITION_INTUITION_H
+ #define INTUITION_INTUITION_H
+ 
++/* included by the AmigaOS header too */
++#include <intuition/iobsolete.h>
++
+ /*
+     Copyright © 1995-2026, The AROS Development Team. All rights reserved.
+     $Id$
+@@ -348,7 +351,7 @@
+ #define GMORE_BOUNDS	   (1L<<0)
+ #define GMORE_GADGETHELP   (1L<<1)
+ #define GMORE_SCROLLRASTER (1L<<2)
+-#define GMORE_BOOPSIGADGET (1L<<3) /* some internal boopsi classes changes the gadget type during execution (ie propgclass), so GTYP_CUSTOMGADGET doesnÂ´t work (dariusb) */
++#define GMORE_BOOPSIGADGET (1L<<10) /* set by intuition for BOOPSI gadgets (V47) */
+ 
+ /***** Bool Gadget *****/
+ struct BoolInfo
+@@ -994,4 +997,47 @@
+ #define SNOTIFY_UNLOCKPUBSCREEN         (1<<16) /* UnlockPubScreen() */
+ #define SNOTIFY_BEFORE_UPDATEINTUITION  (1<<17) /* Intuition is going to be updated */
+ #define SNOTIFY_AFTER_UPDATEINTUITION   (1<<18) /* Intuition is updated */
++
++/* IDCMP_EXTENDEDMOUSE with Code IMSGCODE_INTUIWHEELDATA: IAddress points here */
++struct IntuiWheelData
++{
++    UWORD          Version;                 /* INTUIWHEELDATA_VERSION */
++    UWORD          Reserved;                /* 0 */
++    WORD           WheelX;                  /* horizontal delta */
++    WORD           WheelY;                  /* vertical delta */
++    struct Gadget *HoveredGadget;           /* version 2 */
++};
++
++/* Intuition V47 additions */
++#define AUTOTOPEDGE          3
++
++#define CWCODE_HIDE          2       /* IDCMP_CHANGEWINDOW: window hidden */
++#define CWCODE_SHOW          3       /* ... and shown again */
++
++#define GMORE_HIDDEN         (1L<<4)     /* gadget is hidden */
++#define GMORE_FREEIMAGE      (1L<<11)    /* dispose of GadgetRender with the gadget */
++#define GMORE_PARENTHIDDEN   (1L<<24)    /* a parent group is hidden */
++
++/* Old names of the depth gadget types */
++#define GTYP_WUPFRONT        0x0040
++#define GTYP_SUPFRONT        0x0050
++#define GTYP_WDOWNBACK       0x0060
++#define GTYP_SDOWNBACK       0x0070
++#define GTYP_ICONIFY         0x0090
++
++#define IDCMP_EXTENDEDMOUSE  (1L<<27)
++#define WFLG_HASICONIFY      (1L<<30)
++
++#define SUBMENU              0x0200      /* MenuItem has a submenu */
++#define MIF_SHIFTCOMMSEQ     0x0800      /* command key needs shift */
++#define MIF_EXTENDED         0x8000      /* ExtMenuItem */
++
++#define WA_PointerType       (WA_Dummy + 80)
++#define WA_IconifyGadget     (WA_Dummy + 96)
++
++#define ICTRL_Dummy          (TAG_USER + 0x1C000)    /* IntuitionControlA() tags */
++
++#define SMARTKNOBIMAGE       0x0020      /* PropInfo: knob image scales with the knob */
++#define INTUIWHEELDATA_VERSION 2
++
+ #endif /* INTUITION_INTUITION_H */
+diff -ruN a/intuition/pointerclass.h b/intuition/pointerclass.h
+--- a/intuition/pointerclass.h	2026-11-03 02:04:25.718443791 +0000
++++ b/intuition/pointerclass.h	2026-11-03 05:53:14.516999767 +0000
+@@ -44,4 +44,47 @@
+ #define POINTERYRESN_SCREENRES	     4
+ #define POINTERYRESN_SCREENRESASPECT 5
+ 
++/* Standard pointer shapes (V47, POINTERA_Type / WA_PointerType) */
++#define POINTERTYPE_NORMAL                       0
++#define POINTERTYPE_BUSY                         1
++#define POINTERTYPE_ALIAS                        2
++#define POINTERTYPE_CELL                         3
++#define POINTERTYPE_COLUMNRESIZE                 4
++#define POINTERTYPE_CONTEXTMENU                  5
++#define POINTERTYPE_COPY                         6
++#define POINTERTYPE_CROSS                        7
++#define POINTERTYPE_DRAGANDDROP                  8
++#define POINTERTYPE_EASTRESIZE                   9
++#define POINTERTYPE_EASTWESTRESIZE               10
++#define POINTERTYPE_HAND                         11
++#define POINTERTYPE_HELP                         12
++#define POINTERTYPE_LINK                         13
++#define POINTERTYPE_MENU                         14
++#define POINTERTYPE_NODROP                       15
++#define POINTERTYPE_NONE                         16
++#define POINTERTYPE_NORTHEASTRESIZE              17
++#define POINTERTYPE_NORTHEASTSOUTHWESTRESIZE     18
++#define POINTERTYPE_NORTHRESIZE                  19
++#define POINTERTYPE_NORTHSOUTHRESIZE             20
++#define POINTERTYPE_NORTHWESTRESIZE              21
++#define POINTERTYPE_NORTHWESTSOUTHEASTRESIZE     22
++#define POINTERTYPE_NOTALLOWED                   23
++#define POINTERTYPE_PROGRESS                     24
++#define POINTERTYPE_ROWRESIZE                    25
++#define POINTERTYPE_SCROLLALL                    26
++#define POINTERTYPE_SOUTHEASTRESIZE              27
++#define POINTERTYPE_SOUTHRESIZE                  28
++#define POINTERTYPE_SOUTHWESTRESIZE              29
++#define POINTERTYPE_TEXT                         30
++#define POINTERTYPE_VERTICALTEXT                 31
++#define POINTERTYPE_WESTRESIZE                   32
++#define POINTERTYPE_ZOOMIN                       33
++#define POINTERTYPE_ZOOMOUT                      34
++#define POINTERTYPE_PEN                          35
++#define POINTERTYPE_ROTATE                       36
++#define POINTERTYPE_RUBBER                       37
++#define POINTERTYPE_SELECT                       38
++#define POINTERTYPE_SMUDGE                       39
++#define POINTERTYPE_COUNT                        40
++
+ #endif
+diff -ruN a/intuition/screens.h b/intuition/screens.h
+--- a/intuition/screens.h	2026-11-03 02:04:25.718537998 +0000
++++ b/intuition/screens.h	2026-11-03 06:01:34.327949848 +0000
+@@ -1,6 +1,9 @@
+ #ifndef INTUITION_SCREENS_H
+ #define INTUITION_SCREENS_H
+ 
++/* included by the AmigaOS header too */
++#include <intuition/iobsolete.h>
++
+ /*
+     Copyright © 1995-2025, The AROS Development Team. All rights reserved.
+     $Id$
+@@ -45,8 +48,8 @@
+     WORD MouseX;
+ 
+     UWORD   Flags;
+-    UBYTE * Title;
+-    UBYTE * DefaultTitle;
++    STRPTR  Title;
++    STRPTR  DefaultTitle;
+ 
+     BYTE BarHeight;
+     BYTE BarVBorder;
+@@ -62,7 +65,7 @@
+ 
+     struct ViewPort   ViewPort;
+     struct RastPort   RastPort;
+-    struct BitMap     BitMap_OBSOLETE;    /* OBSOLETE */
++    struct BitMap     BitMap;             /* do not use; see the RKMs */
+     struct Layer_Info LayerInfo;
+ 
+     struct Gadget * FirstGadget;
+@@ -292,14 +295,8 @@
+     struct Image * dri_CheckMark;
+     struct Image * dri_AmigaKey;  
+ 
+-    /*
+-     * The following fields are compatible with AmigaOS v4.
+-     * Present if dri_Version >= 3.
+-     */
+-    struct Screen *dri_Screen;
+-    APTR           dri_Prefs;
+-
+-    IPTR           dri_Reserved[3];
++    struct Screen *dri_Screen;     /* V47 */
++    ULONG          dri_Reserved[4];
+ };
+ 
+ /* dri_Version */
+@@ -321,7 +318,8 @@
+ #define BARDETAILPEN     9
+ #define BARBLOCKPEN      10
+ #define BARTRIMPEN       11
+-#define NUMDRIPENS       12
++#define BARCONTOURPEN    12      /* V47: line under the screen title bar */
++#define NUMDRIPENS       13
+ 
+ #define PEN_C0 0xFEFF
+ #define PEN_C1 0xFEFE
+@@ -344,4 +342,11 @@
+ #define OSERR_ATTACHFAIL   8
+ #define OSERR_NOTAVAILABLE 9
+ 
++/* More screen tags and values (V47) */
++#define SA_Obsolete1        (SA_Dummy + 21)
++#define SA_OffScreenDragging (SA_Dummy + 42)
++#define NSTAG_EXT_VPMODE    (TAG_USER | 1)
++#define OSERR_NORTGBITMAP   (10)    /* no RTG bitmap for this mode */
++#define SDEPTH_CHILDONLY    2       /* ScreenDepth(): move only the child screen */
++
+ #endif /* INTUITION_SCREENS_H */
+diff -ruN a/libraries/amigaguide.h b/libraries/amigaguide.h
+--- a/libraries/amigaguide.h	2026-11-03 02:04:25.722947220 +0000
++++ b/libraries/amigaguide.h	2026-11-03 02:09:00.402265119 +0000
+@@ -144,6 +144,7 @@
+     STRPTR		 xr_File;	/* Name of document file */
+     STRPTR		 xr_Name;	/* Name of item */
+     LONG		 xr_Line;	/* Line defined at */
++    ULONG		 xr_Reserved[2];	/* V44, private */
+ };
+ 
+ #define	XRSIZE	(sizeof (struct XRef))
+diff -ruN a/libraries/asl.h b/libraries/asl.h
+--- a/libraries/asl.h	2026-11-03 02:04:25.722831569 +0000
++++ b/libraries/asl.h	2026-11-03 05:58:15.744901160 +0000
+@@ -1,6 +1,9 @@
+ #ifndef LIBRARIES_ASL_H
+ #define LIBRARIES_ASL_H
+ 
++/* included by the AmigaOS header too */
++#include <exec/semaphores.h>
++
+ /*
+     Copyright © 1995-2007, The AROS Development Team. All rights reserved.
+     $Id$
+@@ -160,12 +163,12 @@
+ /* Fontrequester structure */
+ struct FontRequester
+ {
+-    UBYTE		fo_Reserved[8];
++    UBYTE		fo_Reserved0[8];
+     struct TextAttr	fo_Attr;
+     UBYTE		fo_FrontPen;
+     UBYTE		fo_BackPen;
+     UBYTE		fo_DrawMode;
+-    UBYTE		fo_Reserved1;
++    UBYTE		fo_SpecialDrawMode;	/* V47 */
+     APTR		fo_UserData;
+     WORD		fo_LeftEdge;
+     WORD		fo_TopEdge;
+@@ -428,4 +431,52 @@
+ 
+ /*************************/
+ 
++
++/* The public "asl.library" semaphore with the requester defaults (V45) */
++struct AslSemaphore
++{
++    struct SignalSemaphore as_Semaphore;
++    UWORD                  as_Version;      /* >= 45 */
++    ULONG                  as_Size;         /* sizeof this structure */
++    UBYTE                  as_SortBy;       /* file requester defaults */
++    UBYTE                  as_SortDrawers;
++    UBYTE                  as_SortOrder;
++    UBYTE                  as_SizePosition; /* ASLOPTION_* */
++    WORD                   as_RelativeLeft;
++    WORD                   as_RelativeTop;
++    UBYTE                  as_RelativeWidth;  /* percent of the parent */
++    UBYTE                  as_RelativeHeight;
++};
++
++/* ASL V47 additions */
++#define FONB_DOWILDFUNC         FONB_WILDFUNC
++
++#define ASLFO_InitialCharSet    ASL_TB + 134   /* character set to start with */
++#define ASLFO_DoCharSet         ASL_TB + 135   /* show a character set chooser */
++#define ASLFO_OTagOnly          ASL_TB + 136   /* outline fonts only */
++#define ASLFO_ScalableOnly      ASL_TB + 137   /* scalable fonts only */
++#define ASLFO_CSFilterFunc      ASL_TB + 138   /* filter for the character sets */
++#define ASLFO_InitialSpecMode   ASL_TB + 139   /* FO_SPECIALMODE_* to start with */
++#define ASLFO_DoSpecialMode     ASL_TB + 140   /* show the special mode chooser */
++
++/* fo_SpecialMode / ASLFO_InitialSpecMode */
++#define FO_SPECIALMODE_NONE     0
++#define FO_SPECIALMODE_OUTLINE  1
++#define FO_SPECIALMODE_SHADOW   2
++
++/* as_SizePosition (ASL prefs) */
++#define ASLPOS_DefaultPosition  0x00
++#define ASLPOS_CenterWindow     0x01
++#define ASLPOS_CenterScreen     0x02
++#define ASLPOS_WindowPosition   0x03
++#define ASLPOS_ScreenPosition   0x04
++#define ASLPOS_CenterMouse      0x05
++#define ASLPOS_MASK             0x0F
++
++#define ASLSIZE_DefaultSize     0x00
++#define ASLSIZE_RelativeSize    0x10
++#define ASLSIZE_MASK            0x30
++
++#define ASLOPTION_ASLOverrides  0x40
++
+ #endif /* LIBRARIES_ASL_H */
+diff -ruN a/libraries/configregs.h b/libraries/configregs.h
+--- a/libraries/configregs.h	2026-11-03 02:04:25.722777071 +0000
++++ b/libraries/configregs.h	2026-11-03 02:09:12.437722509 +0000
+@@ -22,23 +22,13 @@
+     UWORD   er_Manufacturer;
+     ULONG   er_SerialNumber;
+     UWORD   er_InitDiagVec;
+-    union {
+-	struct {
+-	    UBYTE   c;
+-	    UBYTE   d;
+-	    UBYTE   e;
+-	    UBYTE   f;
+-	} Reserved0;
+-	struct DiagArea *DiagArea;
+-    } er_;
++    UBYTE   er_Reserved0c;
++    UBYTE   er_Reserved0d;
++    UBYTE   er_Reserved0e;
++    UBYTE   er_Reserved0f;
+ };
+ 
+ /* This allows for simpler definition when assigning a DiagArea pointer. */
+-#define er_Reserved0c	er_.Reserved0.c
+-#define er_Reserved0d	er_.Reserved0.d
+-#define er_Reserved0e	er_.Reserved0.e
+-#define er_Reserved0f	er_.Reserved0.f
+-#define er_DiagArea	er_.DiagArea
+ 
+ struct ExpansionControl
+ {
+diff -ruN a/libraries/expansionbase.h b/libraries/expansionbase.h
+--- a/libraries/expansionbase.h	2026-11-03 02:04:25.723587786 +0000
++++ b/libraries/expansionbase.h	2026-11-03 05:40:01.478446409 +0000
+@@ -1,6 +1,9 @@
+ #ifndef LIBRARIES_EXPANSIONBASE_H
+ #define LIBRARIES_EXPANSIONBASE_H
+ 
++/* included by the AmigaOS header too */
++#include <exec/semaphores.h>
++
+ /*
+     Copyright © 1995-2014, The AROS Development Team. All rights reserved.
+     $Id$
+@@ -55,10 +58,10 @@
+     struct Library      LibNode;
+     UBYTE               Flags;          /* Flags, read only */
+     UBYTE               eb_Private01;
+-    IPTR                eb_Private02;
+-    IPTR                eb_Private03;
++    ULONG               eb_Private02;
++    ULONG               eb_Private03;
+     struct CurrentBinding eb_Private04;
+-    struct List         BoardList;      /* BoardList - private */
++    struct List         eb_Private05;   /* private */
+     struct List         MountList;      /* BootNode entries - public */
+ };
+ 
+diff -ruN a/libraries/gadtools.h b/libraries/gadtools.h
+--- a/libraries/gadtools.h	2026-11-03 02:04:25.723303593 +0000
++++ b/libraries/gadtools.h	2026-11-03 05:54:24.804024603 +0000
+@@ -235,8 +235,8 @@
+ #define GTNM_Clipped         (GT_TagBase + 85)
+ 
+ /* AROS Extensions */
+-#define GTLV_Total  	     (GT_TagBase + 150) /* OM_GET */
+-#define GTLV_Visible	     (GT_TagBase + 151) /* OM_GET */
++#define GTLV_Total           (GT_TagBase + 92) /* OM_GET, V47 */
++#define GTLV_Visible         (GT_TagBase + 93) /* OM_GET, V47 */
+ 
+ /* GTTX_Justification and GTNM_Justification */
+ #define GTJ_LEFT   0
+@@ -272,4 +272,34 @@
+ #define LVR_NORMALDISABLED   2
+ #define LVR_SELECTEDDISABLED 8
+ 
++/* GadTools V47 additions */
++#define NWAY_KIND            CYCLE_KIND      /* old name */
++#define NWAYIDCMP            CYCLEIDCMP
++
++#define GADTOOLBIT           (0x8000)        /* gadget belongs to GadTools */
++#define GADTOOLMASK          (~GADTOOLBIT)
++
++#define NG_GRIDLAYOUT        0x0080          /* ng_Flags: align to a layout grid */
++#define MENU_IMAGE           128             /* nm_Type flag: nm_Label is an Image */
++
++#define BBFT_DISPLAY         6               /* DrawBevelBox frame types */
++#define BBFT_CTXTFRAME       7
++
++#define GTVI_NewWindow       (GT_TagBase + 1)
++#define GTVI_NWTags          (GT_TagBase + 2)
++#define GT_Private0          (GT_TagBase + 3)
++#define GTNW_Labels          (GT_TagBase + 14)
++#define GTNW_Active          (GT_TagBase + 15)
++#define GTBB_Scale           (GT_TagBase + 92)
++#define GTBB_Headline        (GT_TagBase + 93)
++#define GTBB_HeadlinePen     (GT_TagBase + 94)
++#define GTBB_HeadlineFont    (GT_TagBase + 95)
++#define GTVI_LeftBorder      (GT_TagBase + 96)
++#define GTVI_TopBorder       (GT_TagBase + 97)
++#define GTVI_AlignRight      (GT_TagBase + 98)
++#define GTVI_AlignBottom     (GT_TagBase + 99)
++#define GTVI_MinFontWidth    (GT_TagBase + 100)
++#define GTVI_MinFontHeight   (GT_TagBase + 101)
++#define GTMX_ScaledSpacing   (GT_TagBase + 102)
++
+ #endif /* LIBRARIES_GADTOOLS_H */
+diff -ruN a/libraries/iffparse.h b/libraries/iffparse.h
+--- a/libraries/iffparse.h	2026-11-03 02:04:25.723442404 +0000
++++ b/libraries/iffparse.h	2026-11-03 06:01:34.344264686 +0000
+@@ -134,4 +134,11 @@
+ #define IFFLCI_ENTRYHANDLER MAKE_ID('e','n','h','d')
+ #define IFFLCI_EXITHANDLER  MAKE_ID('e','x','h','d')
+ 
++/* Commands for custom stream handlers */
++#define IFFSCC_INIT     0
++#define IFFSCC_CLEANUP  1
++#define IFFSCC_READ     2
++#define IFFSCC_WRITE    3
++#define IFFSCC_SEEK     4
++
+ #endif /* LIBRARIES_IFFPARSE_H */
+diff -ruN a/libraries/locale.h b/libraries/locale.h
+--- a/libraries/locale.h	2026-11-03 02:04:25.722692350 +0000
++++ b/libraries/locale.h	2026-11-03 05:55:52.853213820 +0000
+@@ -149,7 +149,28 @@
+ 
+ #define LANG_NAME   51  /* V50 */
+ 
+-#define MAXSTRMSG 52
++/* Alternative (standalone) day and month names, V47 */
++#define ALTDAY_1 52
++#define ALTDAY_2 53
++#define ALTDAY_3 54
++#define ALTDAY_4 55
++#define ALTDAY_5 56
++#define ALTDAY_6 57
++#define ALTDAY_7 58
++#define ALTMON_1 59
++#define ALTMON_2 60
++#define ALTMON_3 61
++#define ALTMON_4 62
++#define ALTMON_5 63
++#define ALTMON_6 64
++#define ALTMON_7 65
++#define ALTMON_8 66
++#define ALTMON_9 67
++#define ALTMON_10 68
++#define ALTMON_11 69
++#define ALTMON_12 70
++
++#define MAXSTRMSG 71
+ 
+ struct Catalog
+ {
+diff -ruN a/libraries/lowlevel.h b/libraries/lowlevel.h
+--- a/libraries/lowlevel.h	2026-11-03 02:04:25.723150162 +0000
++++ b/libraries/lowlevel.h	2026-11-03 05:55:34.210442237 +0000
+@@ -203,4 +203,29 @@
+ #define LANG_KOREAN	18
+ 
+ 
++/* Short names for the controller bits */
++#define JPB_RIGHT   JPB_JOY_RIGHT
++#define JPB_LEFT    JPB_JOY_LEFT
++#define JPB_DOWN    JPB_JOY_DOWN
++#define JPB_UP      JPB_JOY_UP
++#define JPF_RIGHT   JPF_JOY_RIGHT
++#define JPF_LEFT    JPF_JOY_LEFT
++#define JPF_DOWN    JPF_JOY_DOWN
++#define JPF_UP      JPF_JOY_UP
++
++#define JPB_BTN1    JPB_BUTTON_BLUE
++#define JPB_BTN2    JPB_BUTTON_RED
++#define JPB_BTN3    JPB_BUTTON_YELLOW
++#define JPB_BTN4    JPB_BUTTON_GREEN
++#define JPB_BTN5    JPB_BUTTON_FORWARD
++#define JPB_BTN6    JPB_BUTTON_REVERSE
++#define JPB_BTN7    JPB_BUTTON_PLAY
++#define JPF_BTN1    JPF_BUTTON_BLUE
++#define JPF_BTN2    JPF_BUTTON_RED
++#define JPF_BTN3    JPF_BUTTON_YELLOW
++#define JPF_BTN4    JPF_BUTTON_GREEN
++#define JPF_BTN5    JPF_BUTTON_FORWARD
++#define JPF_BTN6    JPF_BUTTON_REVERSE
++#define JPF_BTN7    JPF_BUTTON_PLAY
++
+ #endif /* LIBRARIES_LOWLEVEL_H */
+diff -ruN a/prefs/asl.h b/prefs/asl.h
+--- a/prefs/asl.h	2026-11-03 02:04:25.722004907 +0000
++++ b/prefs/asl.h	2026-11-03 05:40:01.483062243 +0000
+@@ -1,6 +1,9 @@
+ #ifndef PREFS_ASL_H
+ #define PREFS_ASL_H
+ 
++/* included by the AmigaOS header too */
++#include <libraries/asl.h>
++
+ /*
+     Copyright © 2022, The AROS Development Team. All rights reserved.
+ 
+diff -ruN a/prefs/font.h b/prefs/font.h
+--- a/prefs/font.h	2026-11-03 02:04:25.722311579 +0000
++++ b/prefs/font.h	2026-11-03 02:09:08.622429675 +0000
+@@ -33,6 +33,7 @@
+     UBYTE           fp_FrontPen;
+     UBYTE           fp_BackPen;
+     UBYTE           fp_DrawMode;
++    UBYTE           fp_SpecialDrawMode; /* V47 */
+     struct TextAttr fp_TextAttr;
+     BYTE            fp_Name[FONTNAMESIZE];
+ };
+diff -ruN a/prefs/icontrol.h b/prefs/icontrol.h
+--- a/prefs/icontrol.h	2026-11-03 02:04:25.722235180 +0000
++++ b/prefs/icontrol.h	2026-11-03 05:55:46.919279048 +0000
+@@ -16,6 +16,9 @@
+ #ifndef LIBRARIES_IFFPARSE_H
+ #   include <libraries/iffparse.h>
+ #endif
++#ifndef UTILITY_TAGITEM_H
++#   include <utility/tagitem.h>
++#endif
+ 
+ 
+ #define ID_ICTL MAKE_ID('I','C','T','L')
+@@ -29,8 +32,19 @@
+     UBYTE ic_FrontToBack;
+     UBYTE ic_ReqTrue;
+     UBYTE ic_ReqFalse;
+-    UWORD ic_Reserved2;
+-    UWORD ic_VDragModes[2]; /* Screen drag modes, see below */
++    /* valid when ic_Flags has ICF_VERSIONED, by ic_Version */
++#define IC_CURRENTVERSION 2
++    UWORD ic_Version;
++    UWORD ic_VersionMagic;              /* must be 0 */
++    UBYTE ic_HoverSlugishness : 3;      /* version 2: intuiticks to wait */
++    UBYTE ic_HoverFlags : 5;            /* version 2 */
++    UBYTE ic_Pad;
++    UBYTE ic_GUIGeometry[4];            /* title bar and border geometry */
++};
++
++struct IExceptionPrefs
++{
++    struct TagItem ie_Tags[0];          /* tag list, ends with TAG_END */
+ };
+ 
+ /* Values for ic_Flags */
+@@ -46,20 +60,31 @@
+ #define ICF_MENUSNAP	  (1<<3)
+ #define ICF_MODEPROMOTE   (1<<4)
+ 
+-// FIXME: do we want these MOS extensions?
+-// FIXME: what are the correct values?
+-#define ICF_STICKYMENUS		(1<<31)
+-#define ICF_OPAQUEMOVE          (1<<30)
+-#define ICF_PRIVILEDGEDREFRESH  (1<<29)
+-#define ICF_OFFSCREENLAYERS     (1<<28)
+-#define ICF_DEFPUBSCREEN        (1<<27)
+-#define ICF_SCREENACTIVATION    (1<<26)
+-
+-/* AROS extension */
+-#define ICF_PULLDOWNTITLEMENUS	(1<<17)
+-#define ICF_POPUPMENUS	    	(1<<16)
+-#define ICF_3DMENUS     	(1<<15)
+-#define ICF_AVOIDWINBORDERERASE (1<<14)
++#define ICB_CORRECT_RATIO   5
++#define ICB_OFFSCRNWIN      15
++#define ICB_MORESIZEGADGETS 16
++#define ICB_RATIO_LSB       17
++#define ICB_RATIO_MSB       18
++#define ICB_VERSIONED       31
++
++#define ICF_CORRECT_RATIO   (1<<ICB_CORRECT_RATIO)    /* keep the pixel aspect */
++#define ICF_OFFSCRNWIN      (1<<ICB_OFFSCRNWIN)       /* windows may leave the screen */
++#define ICF_MORESIZEGADGETS (1<<ICB_MORESIZEGADGETS)  /* extra size gadgets */
++#define ICF_VERSIONED       (1UL<<ICB_VERSIONED)      /* ic_Flags has a version */
++
++/* Assumed monitor aspect ratio, two bits */
++#define ICF_RATIO_9_7       (0<<ICB_RATIO_LSB)
++#define ICF_RATIO_9_8       (1<<ICB_RATIO_LSB)
++#define ICF_RATIO_1_1       (2<<ICB_RATIO_LSB)
++#define ICF_RATIO_8_9       (3<<ICB_RATIO_LSB)
++#define ICF_RATIO_MASK      (3<<ICB_RATIO_LSB)
++
++/* Values for ic_HoverFlags */
++#define ICF_HF_HOVERGADGETS (1<<0)
++#define ICF_HF_REFLECTHOVER (1<<1)
++
++/* Chunk for struct IExceptionPrefs */
++#define ID_IEXC MAKE_ID('I','E','X','C')
+ 
+ /* Screen drag modes */
+ #define ICVDM_TBOUND    0x0001  /* Bounded at the top */
+diff -ruN a/prefs/locale.h b/prefs/locale.h
+--- a/prefs/locale.h	2026-11-03 02:04:25.721886003 +0000
++++ b/prefs/locale.h	2026-11-03 02:09:21.546877321 +0000
+@@ -19,10 +19,10 @@
+ #define ID_LCLE MAKE_ID('L','C','L','E')
+ #define ID_CTRY MAKE_ID('C','T','R','Y')
+ 
+-struct RegionPrefs {
++struct CountryPrefs {
+     ULONG cp_Reserved[4];
+ 
+-    ULONG cp_RegionCode;
++    ULONG cp_CountryCode;
+     ULONG cp_TelephoneCode;
+     UBYTE cp_MeasuringSystem;
+ 
+@@ -62,20 +62,20 @@
+     UBYTE cp_CalendarType;
+ };
+ 
+-#define CountryPrefs   RegionPrefs
+-#define cp_CountryCode cp_RegionCode
++#define RegionPrefs    CountryPrefs   /* AROS name */
++#define cp_RegionCode  cp_CountryCode
+ 
+ struct LocalePrefs {
+     ULONG lp_Reserved[4];
+-    char  lp_RegionName[32];
++    char  lp_CountryName[32];
+     char  lp_PreferredLanguages[10][30];
+     LONG  lp_GMTOffset;
+     ULONG lp_Flags;			/* The same as loc_Flags in struct Locale */
+ 
+-    struct CountryPrefs lp_RegionData;
++    struct CountryPrefs lp_CountryData;
+ };
+ 
+-#define lp_CountryName lp_RegionName
+-#define lp_CountryData lp_RegionData
++#define lp_RegionName lp_CountryName   /* AROS names */
++#define lp_RegionData lp_CountryData
+ 
+ #endif /* PREFS_LOCALE_H */
+diff -ruN a/prefs/screenmode.h b/prefs/screenmode.h
+--- a/prefs/screenmode.h	2026-11-03 02:04:25.722386358 +0000
++++ b/prefs/screenmode.h	2026-11-03 05:40:00.499179762 +0000
+@@ -31,8 +31,8 @@
+     UWORD smp_Control;
+ };
+ 
+-#define SMB_AUTOSCROLL 0
++#define SMB_AUTOSCROLL 1  /* sic: AmigaOS value; the flag is bit 0 */
+ 
+-#define SMF_AUTOSCROLL (1 << SMB_AUTOSCROLL)
++#define SMF_AUTOSCROLL (1 << 0)
+ 
+ #endif /* PREFS_SCREENMODE_H */
+diff -ruN a/prefs/wbpattern.h b/prefs/wbpattern.h
+--- a/prefs/wbpattern.h	2026-11-03 02:04:25.722027607 +0000
++++ b/prefs/wbpattern.h	2026-11-03 05:59:16.523820649 +0000
+@@ -56,4 +56,16 @@
+ #define PAT_WIDTH       16
+ #define PAT_HEIGHT      16
+ 
++/* How a picture is placed and aligned (wbp_Flags, V47) */
++#define WBPF_PLACEMENT_TILE         0x0000
++#define WBPF_PLACEMENT_CENTER       0x1000
++#define WBPF_PLACEMENT_SCALE        0x2000
++#define WBPF_PLACEMENT_SCALEGOOD    0x3000
++#define WBPF_PLACEMENT_MASK         0x3000
++
++#define WBPF_ALIGNMENT_MIDDLE       0x0000
++#define WBPF_ALIGNMENT_LEFTTOP      0x4000
++#define WBPF_ALIGNMENT_RIGHTBOTTOM  0x8000
++#define WBPF_ALIGNMENT_MASK         0xC000
++
+ #endif /* PREFS_WBPATTERN_H */
+diff -ruN a/prefs/workbench.h b/prefs/workbench.h
+--- a/prefs/workbench.h	2026-11-03 02:04:25.722479512 +0000
++++ b/prefs/workbench.h	2026-11-03 06:01:34.360343007 +0000
+@@ -37,4 +37,25 @@
+     UBYTE   whdp_Name[0];
+ };
+ 
++
++struct WorkbenchExtendedPrefs
++{
++    struct WorkbenchPrefs wbe_BasicPrefs;
++    ULONG                 wbe_IconMemoryType;   /* obsolete */
++    BOOL                  wbe_LockPens;         /* lock pens 4..7 */
++    BOOL                  wbe_DisableTitleBar;
++    BOOL                  wbe_DisableVolumeGauge;
++    /* V47 */
++    UWORD                 wbe_TitleUpdateDelay; /* ms */
++    ULONG                 wbe_CopyBufferSize;   /* bytes */
++    ULONG                 wbe_Flags;
++};
++
++struct WorkbenchTitleFormatPrefs
++{
++    TEXT wtfp_Format[0];                        /* 0-terminated */
++};
++
++#define ID_WBTF MAKE_ID('W','B','T','F')  /* text and font settings */
++
+ #endif /* PREFS_WORKBENCH_H */
+diff -ruN a/reaction/reaction.h b/reaction/reaction.h
+--- a/reaction/reaction.h	2026-11-03 02:04:25.721715499 +0000
++++ b/reaction/reaction.h	2026-11-03 06:01:34.380569220 +0000
+@@ -142,4 +142,6 @@
+ 
+ /*****************************************************************************/
+ 
++#define REACTION_Justification (REACTION_Dummy + 8)
++
+ #endif /* REACTION_REACTION_H */
+diff -ruN a/resources/card.h b/resources/card.h
+--- a/resources/card.h	2026-11-03 02:04:25.724618302 +0000
++++ b/resources/card.h	2026-11-03 05:40:01.490196657 +0000
+@@ -5,6 +5,9 @@
+ #ifndef RESOURCES_CARD_H
+ #define RESOURCES_CARD_H
+ 
++/* included by the AmigaOS header too */
++#include <exec/types.h>
++
+ #include <exec/nodes.h>
+ #include <exec/interrupts.h>
+ 
+diff -ruN a/resources/disk.h b/resources/disk.h
+--- a/resources/disk.h	2026-11-03 02:04:25.724544311 +0000
++++ b/resources/disk.h	2026-11-03 05:58:55.948441444 +0000
+@@ -5,6 +5,10 @@
+ #ifndef RESOURCES_DISK_H
+ #define RESOURCES_DISK_H
+ 
++/* included by the AmigaOS header too */
++#include <exec/types.h>
++#include <exec/lists.h>
++
+ #include <exec/interrupts.h>
+ #include <exec/libraries.h>
+ #include <exec/ports.h>
+@@ -22,7 +26,7 @@
+ 	struct Library           dr_Library;
+ 	struct DiscResourceUnit *dr_Current;
+ 	UBYTE                    dr_Flags;
+-	UBYTE                    dr_pad;
++	UBYTE                    dr_UnitInit;
+ 	struct Library          *dr_SysLib;
+ 	struct Library          *dr_CiaResource;
+ 	ULONG                    dr_UnitID[4];
+@@ -38,24 +42,26 @@
+ #define DRB_ALLOC1  1
+ #define DRB_ALLOC2  2
+ #define DRB_ALLOC3  3
++#define DRB_DETECT0 4
+ #define DRB_ACTIVE  7
+ 
+ #define DRF_ALLOC0  (1<<DRB_ALLOC0)
+ #define DRF_ALLOC1  (1<<DRB_ALLOC1)
+ #define DRF_ALLOC2  (1<<DRB_ALLOC2)
+ #define DRF_ALLOC3  (1<<DRB_ALLOC3)
++#define DRF_DETECT0 (1<<DRB_DETECT0)
+ #define DRF_ACTIVE  (1<<DRB_ACTIVE)
+ 
+ #define DSKDMAOFF  0x4000
+ 
+ #define DISKNAME  "disk.resource"
+ 
+-#define DR_ALLOCUNIT    ((LIB_BASE - 0) * LIB_VECTSIZE)
+-#define DR_FREEUNIT     ((LIB_BASE - 1) * LIB_VECTSIZE)
+-#define DR_GETUNIT      ((LIB_BASE - 2) * LIB_VECTSIZE)
+-#define DR_GIVEUNIT     ((LIB_BASE - 3) * LIB_VECTSIZE)
+-#define DR_GETUNITID    ((LIB_BASE - 4) * LIB_VECTSIZE)
+-#define DR_READUNITID   ((LIB_BASE - 5) * LIB_VECTSIZE)
++#define DR_ALLOCUNIT    (LIB_BASE - 0 * LIB_VECTSIZE)
++#define DR_FREEUNIT     (LIB_BASE - 1 * LIB_VECTSIZE)
++#define DR_GETUNIT      (LIB_BASE - 2 * LIB_VECTSIZE)
++#define DR_GIVEUNIT     (LIB_BASE - 3 * LIB_VECTSIZE)
++#define DR_GETUNITID    (LIB_BASE - 4 * LIB_VECTSIZE)
++#define DR_READUNITID   (LIB_BASE - 5 * LIB_VECTSIZE)
+ 
+ #define DR_LASTCOMM  (DR_READUNITID)
+ 
+diff -ruN a/resources/filesysres.h b/resources/filesysres.h
+--- a/resources/filesysres.h	2026-11-03 02:04:25.724454029 +0000
++++ b/resources/filesysres.h	2026-11-03 05:40:01.491374957 +0000
+@@ -5,6 +5,10 @@
+ #ifndef RESOURCES_FILESYSRES_H
+ #define RESOURCES_FILESYSRES_H
+ 
++/* included by the AmigaOS header too */
++#include <exec/nodes.h>
++#include <dos/dos.h>
++
+ #include <exec/lists.h>
+ #include <dos/bptr.h>
+ 
+diff -ruN a/resources/misc.h b/resources/misc.h
+--- a/resources/misc.h	2026-11-03 02:04:25.724211750 +0000
++++ b/resources/misc.h	2026-11-03 06:01:34.397055579 +0000
+@@ -5,6 +5,10 @@
+ #ifndef RESOURCES_MISC_H
+ #define RESOURCES_MISC_H
+ 
++/* included by the AmigaOS header too */
++#include <exec/types.h>
++#include <exec/libraries.h>
++
+ 
+ enum
+ {
+@@ -17,4 +21,7 @@
+ 
+ #define MISCNAME "misc.resource"
+ 
++#define MR_ALLOCMISCRESOURCE    (LIB_BASE)
++#define MR_FREEMISCRESOURCE     (LIB_BASE + LIB_VECTSIZE * -1)
++
+ #endif /* RESOURCES_MISC_H */
+diff -ruN a/rexx/errors.h b/rexx/errors.h
+--- a/rexx/errors.h	2026-11-03 02:04:25.724019234 +0000
++++ b/rexx/errors.h	2026-11-03 06:01:34.417258132 +0000
+@@ -64,4 +64,6 @@
+ #define ERR10_048 48
+ #define ERR10_100 100 /* Internal error */
+ 
++#define ERRC_MSG    0       /* error code offset */
++
+ #endif /* REXX_ERRORS_H */
+diff -ruN a/rexx/storage.h b/rexx/storage.h
+--- a/rexx/storage.h	2026-11-03 02:04:25.723935654 +0000
++++ b/rexx/storage.h	2026-11-03 05:40:01.493222192 +0000
+@@ -1,6 +1,9 @@
+ #ifndef REXX_STORAGE_H
+ #define REXX_STORAGE_H
+ 
++/* included by the AmigaOS header too */
++#include <exec/libraries.h>
++
+ /*
+     Copyright © 1995-2016, The AROS Development Team. All rights reserved.
+     $Id$
+diff -ruN a/utility/hooks.h b/utility/hooks.h
+--- a/utility/hooks.h	2026-11-03 02:04:25.724932484 +0000
++++ b/utility/hooks.h	2026-11-03 02:05:28.451953571 +0000
+@@ -26,7 +26,7 @@
+ };
+ 
+ /* You can use this if you want for casting function pointers. */
+-typedef IPTR (*HOOKFUNC)();
++typedef unsigned long (*HOOKFUNC)();
+ 
+ /*
+     Calling conventions for Amiga Hooks.
+diff -ruN a/utility/tagitem.h b/utility/tagitem.h
+--- a/utility/tagitem.h	2026-11-03 02:04:25.724816994 +0000
++++ b/utility/tagitem.h	2026-11-03 02:05:28.451582594 +0000
+@@ -18,8 +18,8 @@
+ 
+ struct TagItem
+ {
+-    Tag         ti_Tag __attribute__((aligned(sizeof(IPTR))));   /* Tag ID                */
+-    IPTR        ti_Data __attribute__((aligned(sizeof(IPTR))));  /* Tag-specific data     */
++    Tag         ti_Tag;    /* Tag ID                */
++    IPTR        ti_Data;   /* Tag-specific data     */
+ } __attribute__((packed));
+ 
+ #ifdef AROS_SLOWSTACKTAGS
+diff -ruN a/workbench/icon.h b/workbench/icon.h
+--- a/workbench/icon.h	2026-11-03 02:04:25.719634675 +0000
++++ b/workbench/icon.h	2026-11-03 06:01:34.434248132 +0000
+@@ -330,4 +330,12 @@
+ /*** Last tag ***************************************************************/
+ #define ICONA_LAST_TAG                  (ICONA_BASE+88)
+ 
++/* icon.library V47 additions */
++#define ICONA_Dummy                 ICONA_BASE
++#define ICONDRAWA_IsLink            (ICONA_Dummy + 89)
++#define ICONDRAWA_LabelShadow       (ICONA_Dummy + 93)
++#define ICONDRAWA_LabelOutline      (ICONA_Dummy + 94)
++#define ICONGETA_IdentifyBuffer     (ICONA_Dummy + 122)
++#define ICONGETA_IdentifyOnly       (ICONA_Dummy + 123)
++
+ #endif /* WORKBENCH_ICON_H */
+diff -ruN a/workbench/workbench.h b/workbench/workbench.h
+--- a/workbench/workbench.h	2026-11-03 02:04:25.719601830 +0000
++++ b/workbench/workbench.h	2026-11-03 05:52:35.527248866 +0000
+@@ -1,6 +1,9 @@
+ #ifndef WORKBENCH_WORKBENCH_H
+ #define WORKBENCH_WORKBENCH_H
+ 
++/* included by the AmigaOS header too */
++#include <dos/dos.h>
++
+ /*
+     Copyright © 1995-2012, The AROS Development Team. All rights reserved.
+     $Id$
+@@ -283,10 +286,11 @@
+ #define TIACTION_Execute        (3)
+ 
+ /*** Private structures *****************************************************/
+-struct AppWindow;
+-struct AppWindowDropZone;
+-struct AppIcon;
+-struct AppMenuItem;
++struct AppWindow         { void *aw_PRIVATE; };
++struct AppWindowDropZone { void *awdz_PRIVATE; };
++struct AppIcon           { void *ai_PRIVATE; };
++struct AppMenuItem       { void *ami_PRIVATE; };
++struct AppMenu           { void *am_PRIVATE; };
+ 
+ /*** Start of workbench.library tags ****************************************/
+ #define WBA_BASE                          (TAG_USER+0xA000)
+@@ -395,4 +399,54 @@
+ #define UPDATEWB_ObjectRemoved              0
+ #define UPDATEWB_ObjectAdded                1
+ 
++/* Workbench 3.2 additions (V47) */
++#define WBA_Dummy                       WBA_BASE
++
++#define AMCLASSICON_EjectDisk           13
++#define WBAPPICONA_SupportsEjectDisk    (WBA_Dummy+158)
++
++/* Global Workbench options (WBCTRLA_Get/SetGlobalFlags) */
++#define WBCTRLA_SetGlobalFlags          (WBA_Dummy+130)
++#define WBCTRLA_GetGlobalFlags          (WBA_Dummy+131)
++#define WBCTRLA_GetDiskInfoHook         (WBA_Dummy+159)
++#define WBCTRLA_SetDiskInfoHook         (WBA_Dummy+160)
++
++#define WBF_DRAWERPOSFREE               0
++#define WBF_DRAWERPOSHEAD               1
++#define WBF_DRAWERPOSTAIL               2
++#define WBF_DRAWERPOSMASK               3
++#define WBF_BOUNDTEXTVIEW               (1<<7)
++#define WBF_OLDDATESFIRST               (1<<16)
++
++/* Drawer display flags */
++#define DDFLAGS_SHOWMASK                3
++#define DDFLAGS_SORTDEFAULT             0
++#define DDFLAGS_SORTASC                 (1<<8)
++#define DDFLAGS_SORTDESC                (2<<8)
++#define DDFLAGS_SORTMASK                (3<<8)
++
++#define GADGBACKFILL                    1
++
++/* WhichWorkbenchObject() results and tags */
++#define WBO_NONE                        0
++#define WBO_DRAWER                      1
++#define WBO_ICON                        2
++
++#define WBOBJA_Type                     (WBA_Dummy+86)
++#define WBOBJA_Left                     (WBA_Dummy+87)
++#define WBOBJA_Top                      (WBA_Dummy+88)
++#define WBOBJA_Width                    (WBA_Dummy+89)
++#define WBOBJA_Height                   (WBA_Dummy+90)
++#define WBOBJA_State                    (WBA_Dummy+91)
++#define WBOBJA_IsFake                   (WBA_Dummy+92)
++#define WBOBJA_Name                     (WBA_Dummy+93)
++#define WBOBJA_NameSize                 (WBA_Dummy+94)
++#define WBOBJA_FullPath                 (WBA_Dummy+95)
++#define WBOBJA_FullPathSize             (WBA_Dummy+96)
++#define WBOBJA_IsLink                   (WBA_Dummy+97)
++#define WBOBJA_DrawerPath               (WBA_Dummy+98)
++#define WBOBJA_DrawerPathSize           (WBA_Dummy+99)
++#define WBOBJA_DrawerFlags              (WBA_Dummy+116)
++#define WBOBJA_DrawerModes              (WBA_Dummy+117)
++
+ #endif /* WORKBENCH_WORKBENCH_H */

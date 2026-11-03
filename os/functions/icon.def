@@ -1,0 +1,41 @@
+# icon.def: the functions of icon.library.
+# From AROS workbench/libs/icon/icon.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base IconBase
+basetype struct Library
+libname icon.library
+include intuition/intuition.h
+include workbench/workbench.h
+include workbench/icon.h
+include utility/tagitem.h
+-54 v36 void FreeFreeList(struct FreeList *freelist) (a0)
+-72 v36 BOOL AddFreeList(struct FreeList *freelist, APTR mem, IPTR size) (a0,a1,a2)
+-78 v36 struct DiskObject *GetDiskObject(CONST_STRPTR name) (a0)
+-84 v36 BOOL PutDiskObject(CONST_STRPTR name, struct DiskObject *icon) (a0,a1)
+-90 v36 void FreeDiskObject(struct DiskObject *diskobj) (a0)
+-96 v36 UBYTE *FindToolType(const STRPTR *toolTypeArray, const STRPTR typeName) (a0,a1)
+-102 v36 BOOL MatchToolValue(UBYTE *typeString, UBYTE *value) (a0,a1)
+-108 v36 UBYTE *BumpRevision(UBYTE *newname, UBYTE *oldname) (a0,a1)
+-114 APTR FreeAlloc(struct FreeList *free, ULONG len, ULONG type) (a0,a1,a2)
+-120 v36 struct DiskObject *GetDefDiskObject(LONG type) (d0)
+-126 v36 BOOL PutDefDiskObject(struct DiskObject *icon) (a0)
+-132 v36 struct DiskObject *GetDiskObjectNew(CONST_STRPTR name) (a0)
+-138 v37 BOOL DeleteDiskObject(UBYTE *name) (a0)
+-144 VOID FreeFree(struct FreeList *free, APTR mem) (a0,a1)
+-150 v44 struct DiskObject *DupDiskObjectA(struct DiskObject *icon, struct TagItem *tags) (a0,a1)
+= struct DiskObject *DupDiskObject(struct DiskObject *icon, Tag tag1, ...)
+-156 v44 ULONG IconControlA(struct DiskObject *icon, struct TagItem *tags) (a0,a1)
+= ULONG IconControl(struct DiskObject *icon, Tag tag1, ...)
+-162 v44 void DrawIconStateA(struct RastPort *rp, struct DiskObject *icon, STRPTR label, LONG leftEdge, LONG topEdge, ULONG state, struct TagItem *tags) (a0,a1,a2,d0,d1,d2,a3)
+= void DrawIconState(struct RastPort *rp, struct DiskObject *icon, STRPTR label, LONG leftEdge, LONG topEdge, ULONG state, Tag tag1, ...)
+-168 v44 BOOL GetIconRectangleA(struct RastPort *rp, struct DiskObject *icon, STRPTR label, struct Rectangle *rectangle, struct TagItem *tags) (a0,a1,a2,a3,a4)
+= BOOL GetIconRectangle(struct RastPort *rp, struct DiskObject *icon, STRPTR label, struct Rectangle *rectangle, Tag tag1, ...)
+-174 v44 struct DiskObject *NewDiskObject(LONG type) (d0)
+-180 v44 struct DiskObject *GetIconTagList(CONST_STRPTR name, const struct TagItem *tags) (a0,a1)
+= struct DiskObject *GetIconTags(CONST_STRPTR name, Tag tag1, ...)
+-186 v44 BOOL PutIconTagList(CONST_STRPTR name, struct DiskObject *icon, struct TagItem *tags) (a0,a1,a2)
+= BOOL PutIconTags(CONST_STRPTR name, struct DiskObject *icon, Tag tag1, ...)
+-192 v44 BOOL LayoutIconA(struct DiskObject *icon, struct Screen *screen, struct TagItem *tags) (a0,a1,a2)
+= BOOL LayoutIcon(struct DiskObject *icon, struct Screen *screen, Tag tag1, ...)
+-198 v44 void ChangeToSelectedIconColor(struct ColorRegister *cr) (a0)
+-204 v47 STRPTR BumpRevisionLength(STRPTR newname, CONST_STRPTR oldname, ULONG maxLength) (a0,a1,d0)

@@ -1,0 +1,10 @@
+# fuelgauge.def: the functions of fuelgauge.gadget.
+# From AROS workbench/classes/reaction/fuelgauge/fuelgauge.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base FuelGaugeBase
+basetype struct Library
+libname fuelgauge.gadget
+include intuition/classes.h
+include intuition/gadgetclass.h
+include gadgets/fuelgauge.h
+-30 Class *FUELGAUGE_GetClass(void) ()

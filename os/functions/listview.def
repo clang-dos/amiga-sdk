@@ -1,0 +1,7 @@
+# listview.def: the functions of listview.gadget.
+# Written for amiga-sdk; checked against the AmigaOS ABI with tools/ndk-compare.py.
+base ListViewBase
+basetype struct Library
+libname listview.gadget
+include intuition/classes.h
+-30 Class *LISTVIEW_GetClass(void) ()

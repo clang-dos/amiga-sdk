@@ -1,0 +1,9 @@
+# battclock.def: the functions of battclock.resource.
+# From AROS rom/battclock/battclock.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base BattClockBase
+basetype struct Library
+libname battclock.resource
+-6 void ResetBattClock(void) ()
+-12 ULONG ReadBattClock(void) ()
+-18 void WriteBattClock(ULONG time) (d0)

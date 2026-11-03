@@ -1,9 +1,8 @@
 // amiga.lib: hooks and BOOPSI method calls, and BeginIO().
 //
-// Part of the Amiga SDK (README.md, "amiga.lib functions").
-//
-// Hooks get the hook in a0, the object in a2 and the message in a1; C
-// functions take their arguments on the stack and may clobber d0-d1/a0-a1.
+// Part of the Amiga SDK (see os/README.md). Hooks get the hook in a0, the
+// object in a2 and the message in a1; C functions take their arguments on
+// the stack and may clobber d0-d1/a0-a1.
 
         .text
 

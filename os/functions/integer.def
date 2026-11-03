@@ -1,0 +1,10 @@
+# integer.def: the functions of integer.gadget.
+# From AROS workbench/classes/reaction/integer/integer.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base IntegerBase
+basetype struct Library
+libname integer.gadget
+include intuition/classes.h
+include intuition/gadgetclass.h
+include gadgets/integer.h
+-30 Class *INTEGER_GetClass(void) ()

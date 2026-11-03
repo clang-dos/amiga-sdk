@@ -1,0 +1,9 @@
+# potgo.def: the functions of potgo.resource.
+# From AROS arch/m68k-amiga/potgo/potgo.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base PotgoBase
+basetype struct Library
+libname potgo.resource
+-6 UWORD AllocPotBits(ULONG bits) (d0)
+-12 VOID FreePotBits(ULONG bits) (d0)
+-18 VOID WritePotgo(ULONG word, ULONG mask) (d0,d1)

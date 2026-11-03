@@ -1,0 +1,10 @@
+# palette.def: the functions of palette.gadget.
+# From AROS workbench/classes/reaction/palette/palette.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base PaletteBase
+basetype struct Library
+libname palette.gadget
+include intuition/classes.h
+include intuition/gadgetclass.h
+include gadgets/palette.h
+-30 Class *PALETTE_GetClass(void) ()

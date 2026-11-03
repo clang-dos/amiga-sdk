@@ -12,7 +12,32 @@ jobs:
         run: |
           sh -n build-sysroot.sh
           bash -n tools/fsuae-test.sh
+          sh -n tools/fetch-aros.sh
       - name: Unit tests, and the NDK headers from Aminet
         env:
           AMIGA_SDK_NETWORK: 1
         run: python3 -m unittest discover -s tests -v
+
+  # Builds the SDK's AmigaOS headers and libamiga.a from AROS and compares
+  # them with Hyperion's NDK 3.2, which is downloaded from Aminet into the
+  # runner's temporary folder for the comparison only. Uses the runner's
+  # clang 18, which has the m68k back end; its assembler is too old for
+  # the stubs, which clang-dos/dos-sdk builds with the SDK's own clang.
+  os-headers:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch the AROS headers
+        run: |
+          sh -n tools/fetch-aros.sh
+          tools/fetch-aros.sh "$RUNNER_TEMP/aros"
+      - name: Build the headers
+        run: |
+          python3 tools/aros-ndk.py --aros "$RUNNER_TEMP/aros" \
+            --out "$RUNNER_TEMP/sdk" --no-stubs
+      - name: Compare with NDK 3.2
+        run: |
+          python3 tools/amiga-ndk.py --sysroot "$RUNNER_TEMP/ndk" --no-stubs
+          python3 tools/ndk-compare.py --clang /usr/lib/llvm-18/bin/clang \
+            --ref "$RUNNER_TEMP/ndk/include" --new "$RUNNER_TEMP/sdk/include" \
+            --protos --fd-ref "$RUNNER_TEMP/ndk/fd" --fd-new "$RUNNER_TEMP/sdk/fd"

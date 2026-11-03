@@ -1,0 +1,11 @@
+# console.def: the functions of console.device.
+# From AROS rom/devs/console/console.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base ConsoleDevice
+basetype struct Device
+libname console.device
+include exec/io.h
+include devices/keymap.h
+include utility/hooks.h
+-42 struct InputEvent *CDInputHandler(CONST struct InputEvent *events, struct Library *consoleDevice) (a0,a1)
+-48 LONG RawKeyConvert(struct InputEvent *events, STRPTR buffer, LONG length, struct KeyMap *keyMap) (a0,a1,d1,a2)

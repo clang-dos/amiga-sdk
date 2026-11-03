@@ -1,0 +1,11 @@
+# battmem.def: the functions of battmem.resource.
+# From AROS rom/battmem/battmem.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base BattMemBase
+basetype struct Library
+libname battmem.resource
+include resources/battmem.h
+-6 void ObtainBattSemaphore(void) ()
+-12 void ReleaseBattSemaphore(void) ()
+-18 ULONG ReadBattMem(APTR buffer, ULONG offset, ULONG length) (a0,d0,d1)
+-24 ULONG WriteBattMem(CONST_APTR buffer, ULONG offset, ULONG length) (a0,d0,d1)

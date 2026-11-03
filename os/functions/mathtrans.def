@@ -1,0 +1,23 @@
+# mathtrans.def: the functions of mathtrans.library.
+# From AROS workbench/libs/mathtrans/mathtrans.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base MathTransBase
+basetype struct Library
+libname mathtrans.library
+-30 FLOAT SPAtan(FLOAT fnum1) (d0)
+-36 FLOAT SPSin(FLOAT fnum1) (d0)
+-42 FLOAT SPCos(FLOAT fnum1) (d0)
+-48 FLOAT SPTan(FLOAT fnum1) (d0)
+-54 FLOAT SPSincos(FLOAT *pfnum2, FLOAT fnum1) (d1,d0)
+-60 FLOAT SPSinh(FLOAT fnum1) (d0)
+-66 FLOAT SPCosh(FLOAT fnum1) (d0)
+-72 FLOAT SPTanh(FLOAT fnum1) (d0)
+-78 FLOAT SPExp(FLOAT fnum1) (d0)
+-84 FLOAT SPLog(FLOAT fnum1) (d0)
+-90 FLOAT SPPow(FLOAT fnum1, FLOAT fnum2) (d1,d0)
+-96 FLOAT SPSqrt(FLOAT fnum1) (d0)
+-102 FLOAT SPTieee(FLOAT fnum) (d0)
+-108 FLOAT SPFieee(FLOAT ieeenum) (d0)
+-114 v31 FLOAT SPAsin(FLOAT fnum1) (d0)
+-120 v31 FLOAT SPAcos(FLOAT fnum1) (d0)
+-126 v31 FLOAT SPLog10(FLOAT fnum1) (d0)

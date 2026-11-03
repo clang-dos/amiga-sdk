@@ -1,0 +1,7 @@
+# sketchboard.def: the functions of sketchboard.gadget.
+# Written for amiga-sdk; checked against the AmigaOS ABI with tools/ndk-compare.py.
+base SketchBoardBase
+basetype struct Library
+libname sketchboard.gadget
+include intuition/classes.h
+-30 Class *SKETCHBOARD_GetClass(void) ()

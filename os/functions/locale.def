@@ -1,0 +1,35 @@
+# locale.def: the functions of locale.library.
+# From AROS workbench/libs/locale/locale.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base LocaleBase
+basetype struct LocaleBase
+libname locale.library
+include utility/hooks.h
+include dos/datetime.h
+include libraries/locale.h
+include stdarg.h
+-36 v39 void CloseCatalog(struct Catalog *catalog) (a0)
+-42 v39 void CloseLocale(struct Locale *locale) (a0)
+-48 v39 ULONG ConvToLower(const struct Locale *locale, ULONG character) (a0,d0)
+-54 v39 ULONG ConvToUpper(const struct Locale *locale, ULONG character) (a0,d0)
+-60 v39 void FormatDate(const struct Locale *locale, CONST_STRPTR formatString, const struct DateStamp *date, const struct Hook *hook) (a0,a1,a2,a3)
+-66 v39 APTR FormatString(const struct Locale *locale, CONST_STRPTR fmtTemplate, APTR dataStream, const struct Hook *putCharFunc) (a0,a1,a2,a3)
+-72 v39 CONST_STRPTR GetCatalogStr(const struct Catalog *catalog, LONG stringNum, CONST_STRPTR defaultString) (a0,d0,a1)
+-78 v39 CONST_STRPTR GetLocaleStr(const struct Locale *locale, ULONG stringNum) (a0,d0)
+-84 v39 BOOL IsAlNum(const struct Locale *locale, ULONG character) (a0,d0)
+-90 v39 BOOL IsAlpha(const struct Locale *locale, ULONG character) (a0,d0)
+-96 v39 BOOL IsCntrl(const struct Locale *locale, ULONG character) (a0,d0)
+-102 v39 BOOL IsDigit(const struct Locale *locale, ULONG character) (a0,d0)
+-108 v39 BOOL IsGraph(const struct Locale *locale, ULONG character) (a0,d0)
+-114 v39 BOOL IsLower(const struct Locale *locale, ULONG character) (a0,d0)
+-120 v39 BOOL IsPrint(const struct Locale *locale, ULONG character) (a0,d0)
+-126 v39 BOOL IsPunct(const struct Locale *locale, ULONG character) (a0,d0)
+-132 v39 BOOL IsSpace(const struct Locale *locale, ULONG character) (a0,d0)
+-138 v39 BOOL IsUpper(const struct Locale *locale, ULONG character) (a0,d0)
+-144 v39 BOOL IsXDigit(const struct Locale *locale, ULONG character) (a0,d0)
+-150 v39 struct Catalog *OpenCatalogA(const struct Locale *locale, CONST_STRPTR name, const struct TagItem *tags) (a0,a1,a2)
+= struct Catalog *OpenCatalog(const struct Locale *locale, CONST_STRPTR name, Tag tag1, ...)
+-156 v39 struct Locale *OpenLocale(CONST_STRPTR name) (a0)
+-162 v39 BOOL ParseDate(struct Locale *locale, struct DateStamp *date, CONST_STRPTR fmtTemplate, struct Hook *getCharFunc) (a0,a1,a2,a3)
+-174 v39 ULONG StrConvert(const struct Locale *locale, CONST_STRPTR string, APTR buffer, ULONG bufferSize, ULONG type) (a0,a1,a2,d0,d1)
+-180 v39 LONG StrnCmp(const struct Locale *locale, CONST_STRPTR string1, CONST_STRPTR string2, LONG length, ULONG type) (a0,a1,a2,d0,d1)

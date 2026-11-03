@@ -1,0 +1,10 @@
+# bevel.def: the functions of bevel.image.
+# From AROS workbench/classes/reaction/bevel/bevel.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base BevelBase
+basetype struct Library
+libname bevel.image
+include intuition/classes.h
+include intuition/imageclass.h
+include images/bevel.h
+-30 Class *BEVEL_GetClass(void) ()

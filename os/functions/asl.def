@@ -1,0 +1,19 @@
+# asl.def: the functions of asl.library.
+# From AROS workbench/libs/asl/asl.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base AslBase
+basetype struct Library
+libname asl.library
+include exec/types.h
+include utility/tagitem.h
+include libraries/asl.h
+-30 v36 struct FileRequester *AllocFileRequest(void) ()
+-36 v36 void FreeFileRequest(struct FileRequester *fileReq) (a0)
+-42 v36 BOOL RequestFile(struct FileRequester *fileReq) (a0)
+-48 v36 APTR AllocAslRequest(ULONG reqType, struct TagItem *tagList) (d0,a0)
+= APTR AllocAslRequestTags(ULONG reqType, Tag tag1, ...)
+-54 v36 void FreeAslRequest(APTR requester) (a0)
+-60 v36 BOOL AslRequest(APTR requester, struct TagItem *tagList) (a0,a1)
+= BOOL AslRequestTags(APTR requester, Tag tag1, ...)
+-78 v50 void AbortAslRequest(APTR requester) (a0)
+-84 v50 void ActivateAslRequest(APTR requester) (a0)

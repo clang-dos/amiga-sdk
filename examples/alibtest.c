@@ -1,5 +1,6 @@
 // Exercises the amiga.lib helpers in libamiga.a: lists, ports, I/O
-// requests, the timer, tasks, pools, hooks and BOOPSI method calls.
+// requests, the timer, tasks, pools, hooks, BOOPSI method calls, the
+// vertical blank helpers, debug.lib (on the serial port) and reaction.lib.
 // Prints one line per check and "PASS" at the end if all of them passed.
 #include <stdio.h>
 #include <string.h>
@@ -11,12 +12,22 @@
 #include <intuition/intuition.h>
 #include <intuition/classes.h>
 #include <intuition/classusr.h>
+#include <intuition/icclass.h>
+#include <intuition/gadgetclass.h>
+#include <graphics/graphint.h>
 #include <utility/hooks.h>
+#include <gadgets/clicktab.h>
 #include <proto/exec.h>
 #include <proto/intuition.h>
+#include <proto/graphics.h>
+#include <proto/clicktab.h>
 #include <clib/alib_protos.h>
+#include <clib/debug_protos.h>
+#include <clib/reaction_lib_protos.h>
 
 struct IntuitionBase *IntuitionBase;
+struct GfxBase *GfxBase;
+struct Library *ClickTabBase;
 static int failed;
 
 static void check(const char *what, int ok) {
@@ -35,10 +46,24 @@ static void child(void) {
   Signal(parent, 1UL << childsig);
 }
 
+static volatile LONG ticks;
+static LONG tick(APTR arg) {
+  ticks += (LONG)arg;
+  return 0;
+}
+
 #define MYM_ADD 0x5A0001
+#define MYM_GADD 0x5A0002 // a gadget method: the GadgetInfo comes first
+#define MYA_ANSWER (TAG_USER + 0x5A0001)
 static ULONG dispatch(struct IClass *cl, Object *o, Msg msg) {
   if (msg->MethodID == MYM_ADD)
     return ((ULONG *)msg)[1] + ((ULONG *)msg)[2];
+  if (msg->MethodID == MYM_GADD)
+    return ((ULONG *)msg)[2] + ((ULONG *)msg)[3];
+  if (msg->MethodID == OM_GET && ((struct opGet *)msg)->opg_AttrID == MYA_ANSWER) {
+    *((struct opGet *)msg)->opg_Storage = 42;
+    return 1;
+  }
   return DoSuperMethodA(cl, o, msg);
 }
 
@@ -111,6 +136,37 @@ int main(void) {
   check("ACrypt", ACrypt((STRPTR)buf, (CONST_STRPTR) "secret", (CONST_STRPTR) "user") == (STRPTR)buf &&
                       strlen(buf) == 11);
 
+  check("KCmpStr", KCmpStr((CONST_STRPTR) "abc", (CONST_STRPTR) "abc") == 0 &&
+                      KCmpStr((CONST_STRPTR) "abc", (CONST_STRPTR) "abd") < 0);
+  KPutStr((CONST_STRPTR) "alibtest: KPutStr\n");
+  KPrintF((CONST_STRPTR) "alibtest: KPrintF %ld %s\n", 1234L, "ok");
+  check("KPutStr + KPrintF (serial)", 1);
+
+  struct Isrvstr tof = {0};
+  ticks = 0;
+  AddTOF(&tof, tick, (APTR)2);
+  TimeDelay(UNIT_VBLANK, 0, 200000);
+  RemTOF(&tof);
+  LONG t1 = ticks;
+  TimeDelay(UNIT_VBLANK, 0, 100000);
+  check("AddTOF + RemTOF", t1 >= 10 && !(t1 & 1) && ticks == t1);
+
+  GfxBase = (struct GfxBase *)OpenLibrary((CONST_STRPTR) "graphics.library", 0);
+  if (GfxBase) {
+    waitbeam(200);
+    check("waitbeam", VBeamPos() >= 200 || VBeamPos() < 10);
+    CloseLibrary((struct Library *)GfxBase);
+  }
+
+  struct TagItem upd[] = {{ICSPECIAL_CODE, 77}, {TAG_DONE, 0}};
+  struct IntuiMessage im = {0};
+  im.Class = IDCMP_IDCMPUPDATE;
+  im.Code = 5;
+  im.IAddress = upd;
+  ok = GetCode(&im) == 77;
+  im.Class = IDCMP_GADGETUP;
+  check("GetCode", ok && GetCode(&im) == 5);
+
   IntuitionBase = (struct IntuitionBase *)OpenLibrary((CONST_STRPTR) "intuition.library", 36);
   if (IntuitionBase) {
     struct IClass *cl = MakeClass(NULL, (ClassID) "rootclass", NULL, 0, 0);
@@ -126,11 +182,49 @@ int main(void) {
         ULONG m[3] = {MYM_ADD, 5, 6};
         check("DoMethodA", DoMethodA(o, (Msg)m) == 11);
         check("CoerceMethod", CoerceMethod(cl, o, MYM_ADD, 1UL, 2UL) == 3);
+        ULONG v = 0, w = 0;
+        check("GetAttrs", GetAttrs(o, MYA_ANSWER, (ULONG)&v, TAG_DONE) == 1 && v == 42);
+        struct TagItem ga[] = {{TAG_IGNORE, 0}, {MYA_ANSWER, (ULONG)&w}, {TAG_DONE, 0}};
+        check("GetAttrsA", GetAttrsA(o, ga) == 1 && w == 42);
+        check("LibDoGadgetMethod",
+              LibDoGadgetMethod((struct Gadget *)o, NULL, NULL, MYM_ADD, 7UL, 8UL) == 15);
         DisposeObject(o);
       }
       FreeClass(cl);
     } else
       check("MakeClass", 0);
+
+    // A gadget in a window: on V39 and later this goes through
+    // DoGadgetMethodA(), which puts a GadgetInfo in the message's second
+    // long word.
+    struct IClass *gcl = MakeClass(NULL, (ClassID) "gadgetclass", NULL, 0, 0);
+    if (gcl) {
+      gcl->cl_Dispatcher.h_Entry = (APTR)HookEntry;
+      gcl->cl_Dispatcher.h_SubEntry = (APTR)dispatch;
+      Object *g = NewObject(gcl, NULL, GA_Width, 10UL, GA_Height, 10UL, TAG_DONE);
+      struct Window *win = OpenWindowTags(NULL, WA_Width, 200UL, WA_Height, 60UL,
+                                          WA_Title, (ULONG) "alibtest", TAG_DONE);
+      check("LibDoGadgetMethod (window)",
+            g && win && LibDoGadgetMethod((struct Gadget *)g, win, NULL, MYM_GADD, 0UL, 7UL, 8UL) == 15);
+      if (win)
+        CloseWindow(win);
+      if (g)
+        DisposeObject(g);
+      FreeClass(gcl);
+    } else
+      check("MakeClass", 0);
+    ClickTabBase = OpenLibrary((CONST_STRPTR) "gadgets/clicktab.gadget", 0);
+    if (ClickTabBase) {
+      struct List *tabs = ClickTabs((STRPTR) "One", (STRPTR) "Two", (STRPTR) "Three", NULL);
+      int n = 0;
+      if (tabs)
+        for (struct Node *nd = tabs->lh_Head; nd->ln_Succ; nd = nd->ln_Succ)
+          n++;
+      check("ClickTabs", n == 3);
+      FreeClickTabs(tabs);
+      CloseLibrary(ClickTabBase);
+    } else
+      printf("ClickTabs skipped (no clicktab.gadget)\n");
     CloseLibrary((struct Library *)IntuitionBase);
   } else
     printf("BOOPSI checks skipped (Kickstart 1.3)\n");

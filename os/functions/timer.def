@@ -1,0 +1,12 @@
+# timer.def: the functions of timer.device.
+# From AROS rom/timer/timer.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base TimerBase
+basetype struct Device
+libname timer.device
+include devices/timer.h
+-42 void AddTime(struct timeval *dest, struct timeval *src) (a0,a1)
+-48 void SubTime(struct timeval *dest, struct timeval *src) (a0,a1)
+-54 LONG CmpTime(struct timeval *dest, struct timeval *src) (a0,a1)
+-60 ULONG ReadEClock(struct EClockVal *dest) (a0)
+-66 void GetSysTime(struct timeval *dest) (a0)

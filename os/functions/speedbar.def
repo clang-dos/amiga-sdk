@@ -1,0 +1,17 @@
+# speedbar.def: the functions of speedbar.gadget.
+# From AROS workbench/classes/reaction/speedbar/speedbar.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base SpeedBarBase
+basetype struct Library
+libname speedbar.gadget
+include intuition/classes.h
+include intuition/gadgetclass.h
+include gadgets/speedbar.h
+-30 Class *SPEEDBAR_GetClass(void) ()
+-36 struct Node *AllocSpeedButtonNodeA(ULONG number, struct TagItem *tags) (d0,a0)
+= struct Node *AllocSpeedButtonNode(ULONG number, ...)
+-42 void FreeSpeedButtonNode(struct Node *node) (a0)
+-48 void SetSpeedButtonNodeAttrsA(struct Node *node, struct TagItem *tags) (a0,a1)
+= void SetSpeedButtonNodeAttrs(struct Node *node, Tag tag1, ...)
+-54 void GetSpeedButtonNodeAttrsA(struct Node *node, struct TagItem *tags) (a0,a1)
+= void GetSpeedButtonNodeAttrs(struct Node *node, Tag tag1, ...)

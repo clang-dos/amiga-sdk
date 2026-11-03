@@ -1,0 +1,19 @@
+# trackfile.def: the functions of trackfile.device.
+# Written for amiga-sdk; checked against the AmigaOS ABI with tools/ndk-compare.py.
+base TrackFileBase
+basetype struct Device
+libname trackfile.device
+include devices/trackfile.h
+-42 LONG TFStartUnitTagList(LONG which_unit, struct TagItem *tags) (d0,a0)
+= LONG TFStartUnitTags(LONG which_unit, Tag tag1, ...)
+-48 LONG TFStopUnitTagList(LONG which_unit, struct TagItem *tags) (d0,a0)
+= LONG TFStopUnitTags(LONG which_unit, Tag tag1, ...)
+-54 LONG TFInsertMediaTagList(LONG which_unit, struct TagItem *tags) (d0,a0)
+= LONG TFInsertMediaTags(LONG which_unit, Tag tag1, ...)
+-60 LONG TFEjectMediaTagList(LONG which_unit, struct TagItem *tags) (d0,a0)
+= LONG TFEjectMediaTags(LONG which_unit, Tag tag1, ...)
+-66 struct TrackFileUnitData *TFGetUnitData(LONG which_unit) (d0)
+-72 VOID TFFreeUnitData(struct TrackFileUnitData *tfud) (a0)
+-78 LONG TFChangeUnitTagList(LONG which_unit, struct TagItem *tags) (d0,a0)
+= LONG TFChangeUnitTags(LONG which_unit, Tag tag1, ...)
+-84 LONG TFExamineFileSize(LONG file_size) (d0)

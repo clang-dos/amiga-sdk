@@ -1,0 +1,10 @@
+# glyph.def: the functions of glyph.image.
+# From AROS workbench/classes/reaction/glyph/glyph.conf (128dae41825d), checked against the AmigaOS ABI with
+# tools/ndk-compare.py; maintained by hand. See os/README.md.
+base GlyphBase
+basetype struct Library
+libname glyph.image
+include intuition/classes.h
+include intuition/imageclass.h
+include images/glyph.h
+-30 Class *GLYPH_GetClass(void) ()

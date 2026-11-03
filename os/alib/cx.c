@@ -1,7 +1,7 @@
 /*
  * amiga.lib: commodities helpers. They use commodities.library: the
  * program opens it as CxBase.
- * Part of the Amiga SDK (README.md, "amiga.lib functions").
+ * Part of the Amiga SDK; see os/README.md.
  */
 #include <exec/types.h>
 #include <exec/memory.h>

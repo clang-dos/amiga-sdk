@@ -1,0 +1,7 @@
+# getcolor.def: the functions of getcolor.gadget.
+# Written for amiga-sdk; checked against the AmigaOS ABI with tools/ndk-compare.py.
+base GetColorBase
+basetype struct Library
+libname getcolor.gadget
+include intuition/classes.h
+-30 Class *GETCOLOR_GetClass(void) ()
