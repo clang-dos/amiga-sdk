@@ -7,6 +7,7 @@ may not be passed on with this SDK. This script downloads it (or takes a
 copy you have), checks it, and installs:
 
   include/        the NDK's C headers, with proto/ headers for clang
+  fd/             the NDK's library descriptions (*_lib.fd)
   lib/libamiga.a  a stub for each public function of every OS library,
                   which loads the arguments into the registers the library
                   expects and calls it through its base in a6, and
@@ -91,6 +92,10 @@ CLANG_COMPILER_SPECIFIC = b"""
 
 
 def patch_header(rel, body):
+    # filetypes.h includes its neighbour as tools/textedit/, which only
+    # works on file systems that ignore case.
+    if rel == "tools/TextEdit/filetypes.h":
+        body = body.replace(b"<tools/textedit/", b"<tools/TextEdit/")
     if rel == "clib/compiler-specific.h":
         marker = b"#define\tCOMPILER_SPECIFIC_H\n"
         if marker not in body:
@@ -165,6 +170,11 @@ def main():
             f.write(patch_header(rel, body))
         count += 1
     print("installed %d headers in %s" % (count, inc))
+    fddir = os.path.join(args.sysroot, "fd")
+    os.makedirs(fddir, exist_ok=True)
+    for fdname, body in fds.items():
+        with open(os.path.join(fddir, fdname), "wb") as f:
+            f.write(body)
 
     work = tempfile.mkdtemp(prefix="amiga-ndk-")
     try:

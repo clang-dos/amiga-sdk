@@ -53,10 +53,13 @@ static LONG tick(APTR arg) {
 }
 
 #define MYM_ADD 0x5A0001
+#define MYM_GADD 0x5A0002 // a gadget method: the GadgetInfo comes first
 #define MYA_ANSWER (TAG_USER + 0x5A0001)
 static ULONG dispatch(struct IClass *cl, Object *o, Msg msg) {
   if (msg->MethodID == MYM_ADD)
     return ((ULONG *)msg)[1] + ((ULONG *)msg)[2];
+  if (msg->MethodID == MYM_GADD)
+    return ((ULONG *)msg)[2] + ((ULONG *)msg)[3];
   if (msg->MethodID == OM_GET && ((struct opGet *)msg)->opg_AttrID == MYA_ANSWER) {
     *((struct opGet *)msg)->opg_Storage = 42;
     return 1;
@@ -192,7 +195,8 @@ int main(void) {
       check("MakeClass", 0);
 
     // A gadget in a window: on V39 and later this goes through
-    // DoGadgetMethodA(), which gives the method a GadgetInfo.
+    // DoGadgetMethodA(), which puts a GadgetInfo in the message's second
+    // long word.
     struct IClass *gcl = MakeClass(NULL, (ClassID) "gadgetclass", NULL, 0, 0);
     if (gcl) {
       gcl->cl_Dispatcher.h_Entry = (APTR)HookEntry;
@@ -201,7 +205,7 @@ int main(void) {
       struct Window *win = OpenWindowTags(NULL, WA_Width, 200UL, WA_Height, 60UL,
                                           WA_Title, (ULONG) "alibtest", TAG_DONE);
       check("LibDoGadgetMethod (window)",
-            g && win && LibDoGadgetMethod((struct Gadget *)g, win, NULL, MYM_ADD, 7UL, 8UL) == 15);
+            g && win && LibDoGadgetMethod((struct Gadget *)g, win, NULL, MYM_GADD, 0UL, 7UL, 8UL) == 15);
       if (win)
         CloseWindow(win);
       if (g)
