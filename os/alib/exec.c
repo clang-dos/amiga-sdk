@@ -1,6 +1,6 @@
 /*
  * amiga.lib: exec helpers (ports, I/O requests, tasks, lists, pools).
- * Part of the Amiga SDK (README.md, "amiga.lib functions").
+ * Part of the Amiga SDK; see os/README.md.
  */
 #include <exec/types.h>
 #include <exec/memory.h>

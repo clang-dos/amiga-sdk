@@ -1,7 +1,8 @@
 #!/bin/bash
 # fsuae-test.sh MODEL ROM ADF HOSTDIR SECONDS SHOT.png
 # Boots ADF on an emulated Amiga with HOSTDIR mounted as DH1:, waits, and
-# takes a screenshot. Programs write results to DH1:.
+# takes a screenshot. Programs write results to DH1:. With SERIAL=/dev/pts/N
+# set, the serial port goes to that terminal (debug.lib output).
 set -e
 MODEL=$1 ROM=$2 ADF=$3 HOST=$4 SECS=${5:-40} SHOT=${6:-shot.png}
 CFG=$(mktemp --suffix=.fs-uae)
@@ -21,6 +22,7 @@ audio_driver = null
 video_sync = 0
 warp_mode = 1
 uae_cpu_speed = max
+${SERIAL:+serial_port = $SERIAL}
 CFGEOF
 export DISPLAY=:77
 Xvfb :77 -screen 0 800x600x24 >/dev/null 2>&1 &
