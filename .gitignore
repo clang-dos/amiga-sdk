@@ -5,3 +5,6 @@
 /ndk/
 /sysroot/
 __pycache__/
+*.lha
+/build-amigaos/
+/m68k-amigaos/

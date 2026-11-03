@@ -12,5 +12,7 @@ jobs:
         run: |
           sh -n build-sysroot.sh
           bash -n tools/fsuae-test.sh
-      - name: fd2stub tests
+      - name: Unit tests, and the NDK headers from Aminet
+        env:
+          AMIGA_SDK_NETWORK: 1
         run: python3 -m unittest discover -s tests -v
