@@ -1,7 +1,0 @@
-# dtclass.def: the function every DataTypes class library has.
-# Offsets and registers: the AmigaOS ABI. Written for amiga-sdk.
-base DTClassBase
-basetype struct Library
-libname dtclass
-include intuition/classes.h
--30 Class *ObtainEngine(void) ()
