@@ -33,7 +33,7 @@ Commodore, Amiga Inc. or Hyperion file. The AROS headers are under the
 AROS Public License; `patches/amigaos.patch` and the prototypes taken over
 into `functions/*.def` are changes to them and are under that licence too.
 The sysroot gets a copy of it as `include/LICENSE.AROS`. Everything else in
-this folder is the SDK's own work, under the repository's BSD licence.
+this folder is the SDK's own work, under the repository's licence (AGPL-3.0-only).
 
 The NDK is used only to check the result. `tools/ndk-compare.py` compiles
 every NDK 3.2 header and the SDK's one with clang and compares structure
