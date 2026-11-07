@@ -135,3 +135,24 @@ The examples run in FS-UAE on Kickstart 1.3 (A500), 2.04 (A3000) and 3.1
 C++ (libc++), register-argument functions (libraries, devices),
 FPU code generation, small data (a4), inline OS calls without the stubs,
 auto-opening of libraries, Ctrl-C handling.
+
+## License
+
+The clang-retro Amiga SDK is free software under the GNU Affero General Public
+License, version 3 only (`AGPL-3.0-only`); the full text is in
+[LICENSE](LICENSE). If you distribute a program built with it, or let
+people use a modified version over a network, you must offer the
+program's complete source under the same license.
+
+The parts taken from AROS keep the AROS Public License (see
+[os/README.md](os/README.md)): the headers in `os/include/`,
+`os/patches/`, the prototypes in `os/functions/`, `os/alib/acrypt.c`,
+and the random number functions in `os/alib/exec.c`.
+
+A commercial license, for programs that cannot meet those terms, is
+available from the clang-retro project; ask through
+[the clang-retro organization on GitHub](https://github.com/clang-retro).
+
+Contributions are accepted under the Contributor License Agreement in
+[CONTRIBUTING.md](CONTRIBUTING.md), which lets the project offer the
+code under both licenses.
